@@ -1,42 +1,54 @@
-// CustomerDetail.test.tsx
-import React from "react";
-import { render, screen } from "@testing-library/react";
-import CustomerDetail from "./CustomerDetail";
+import React from 'react';
+import { IcustomerProps } from '../../customer-profile';
+import {
+  Box,
+  Input,
+  Radio,
+  RadioGroup,
+  Typography,
+} from '@ucl/ui-components';
+import '../../customer-profile.css';
+const TechnicalContact = ({ customer, setCustomer }: IcustomerProps) => {
+  return (
+    <Box className="section">
+        <Typography variant="h3" className="main-header" fontStyle="italic">
+          Technical Contact
+        </Typography>
+        <Box className="sub-section">
+          <Box className="main-container">
+            <Input
+              className="main-input"
+              titleLabel="Name"
+              placeholder="Name"
+            />
+            <Input
+              className="main-input"
+              titleLabel="Phone"
+              placeholder="Phone Number"
+            />
+          </Box>
+          <Box className="main-container">
+            <Input
+              className="main-input"
+              titleLabel="Email"
+              placeholder="Email"
+            />
+          </Box>
+          <Box className="main-checkgroup">
+            <Typography variant="body1">Preferred Method :</Typography>
+            <RadioGroup
+              className="check-group"
+              defaultValue="Yes"
+              errorText=""
+              helperText=""
+            >
+              <Radio label="Email" value="Email" />
+              <Radio label="Phone" value="Phone" />
+            </RadioGroup>
+          </Box>
+        </Box>
+      </Box>
 
-describe("CustomerDetail Component", () => {
-  const mockCustomer = {};
-  const mockSetCustomer = jest.fn();
-
-  it("renders header text", () => {
-    render(<CustomerDetail customer={mockCustomer} setCustomer={mockSetCustomer} />);
-    const header = screen.getByText(/Customer Info/i);
-    expect(header).toBeTruthy();
-  });
-
-  it("renders input placeholders", () => {
-    render(<CustomerDetail customer={mockCustomer} setCustomer={mockSetCustomer} />);
-    
-    expect(screen.getByPlaceholderText("Customer Name")).toBeTruthy();
-    expect(screen.getByPlaceholderText("CIS Number")).toBeTruthy();
-    expect(screen.getByPlaceholderText("Billing profile Id")).toBeTruthy();
-  });
-
-  it("renders select options", () => {
-    render(<CustomerDetail customer={mockCustomer} setCustomer={mockSetCustomer} />);
-    
-    expect(screen.getByText("Commercial")).toBeTruthy();
-    expect(screen.getByText("Internal")).toBeTruthy();
-  });
-
-  it("renders radio buttons", () => {
-    render(<CustomerDetail customer={mockCustomer} setCustomer={mockSetCustomer} />);
-    
-    expect(screen.getByLabelText("Yes")).toBeTruthy();
-    expect(screen.getByLabelText("No")).toBeTruthy();
-  });
-
-  it("matches snapshot", () => {
-    const { asFragment } = render(<CustomerDetail customer={mockCustomer} setCustomer={mockSetCustomer} />);
-    expect(asFragment()).toMatchSnapshot();
-  });
-});
+  );
+};
+export default TechnicalContact;
