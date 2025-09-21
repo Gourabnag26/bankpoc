@@ -1,49 +1,36 @@
-import React from 'react';
-import { IcustomerProps } from '../../customer-profile';
-import {
-  Box,
-  Input,
-  Radio,
-  RadioGroup,
-  Typography,
-} from '@ucl/ui-components';
-import '../../customer-profile.css';
-const BusinessContact = ({ customer, setCustomer }: IcustomerProps) => {
-  return (
-    <Box className="section">
-      <Typography variant="h3" className="main-header" fontStyle="italic">
-        Business Contact
-      </Typography>
-      <Box className="sub-section">
-        <Box className="main-container">
-          <Input className="main-input" titleLabel="Name" placeholder="Name" />
-          <Input
-            className="main-input"
-            titleLabel="Phone"
-            placeholder="Phone Number"
-          />
-        </Box>
-        <Box className="main-container">
-          <Input
-            className="main-input"
-            titleLabel="Email"
-            placeholder="Email"
-          />
-        </Box>
-        <Box className="main-checkgroup">
-          <Typography variant="body1">Preferred Method :</Typography>
-          <RadioGroup
-            className="check-group"
-            defaultValue="Yes"
-            errorText=""
-            helperText=""
-          >
-            <Radio label="Email" value="Email" />
-            <Radio label="Phone" value="No" />
-          </RadioGroup>
-        </Box>
-      </Box>
-    </Box>
-  );
-};
-export default BusinessContact;
+// BusinessContact.test.tsx
+import React from "react";
+import { render, screen } from "@testing-library/react";
+import BusinessContact from "./BusinessContact";
+
+describe("BusinessContact Component", () => {
+  const mockCustomer = {};
+  const mockSetCustomer = jest.fn();
+
+  it("renders header text", () => {
+    render(<BusinessContact customer={mockCustomer} setCustomer={mockSetCustomer} />);
+    const header = screen.getByText(/Business Contact/i);
+    expect(header).toBeTruthy();
+  });
+
+  it("renders input placeholders", () => {
+    render(<BusinessContact customer={mockCustomer} setCustomer={mockSetCustomer} />);
+    
+    expect(screen.getByPlaceholderText("Name")).toBeTruthy();
+    expect(screen.getByPlaceholderText("Phone Number")).toBeTruthy();
+    expect(screen.getByPlaceholderText("Email")).toBeTruthy();
+  });
+
+  it("renders radio buttons for Preferred Method", () => {
+    render(<BusinessContact customer={mockCustomer} setCustomer={mockSetCustomer} />);
+    
+    expect(screen.getByLabelText("Email")).toBeTruthy();
+    expect(screen.getByLabelText("Phone")).toBeTruthy();
+  });
+
+  it("renders Preferred Method label", () => {
+    render(<BusinessContact customer={mockCustomer} setCustomer={mockSetCustomer} />);
+    const label = screen.getByText(/Preferred Method/i);
+    expect(label).toBeTruthy();
+  });
+});
