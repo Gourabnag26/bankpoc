@@ -1,41 +1,49 @@
-import React from "react"
-import { Input, TextField } from "@ucl/ui-components"
+// TimeInput.test.tsx
+import React from "react";
+import { render, screen, fireEvent } from "@testing-library/react";
+import TimeInput from "./TimeInput";
 
+describe("TimeInput Component", () => {
+  it("renders with initial time", () => {
+    const mockSetTime = jest.fn();
+    render(<TimeInput time="10:30" setTime={mockSetTime} />);
+    const input = screen.getByDisplayValue("10:30");
+    expect(input).toBeTruthy();
+  });
 
-interface ItimeInputProps{
-    time:string,
-    setTime:(value:string)=>void,
-    
-}
+  it("formats time on blur", () => {
+    const mockSetTime = jest.fn();
+    render(<TimeInput time="9:5" setTime={mockSetTime} />);
+    const input = screen.getByDisplayValue("9:5");
 
-const TimeInput=({time,setTime}:ItimeInputProps)=>{
-    const handleBlur=()=>{
-        if(!time)
-        return;
-       const [hours="",minutes=""]=time.split(":");
-       const formatedHours=hours.padStart(2,"0");
-       const formatedMinutes=minutes.padStart(2,"0");
-       setTime(`${formatedHours}:${formatedMinutes || "00"}`)
+    fireEvent.blur(input);
+    expect(mockSetTime).toHaveBeenCalledWith("09:05");
+  });
 
-    }
-    const handleTimeChange=(e:any)=>{
-        let value=e.target.value;
-        value=value.replace(/[^0-9:]/g,"");
-        if(value.length==2 && ! value.includes(":"))
-        {
-            value=value+":"
-        }
-        const [hours,minutes]=value.split(":")
-        if(hours && Number(hours) >23)
-        return;
-        if(minutes && Number(minutes) >59 )
-        return;
-        setTime(value)
-    }
-    return(
-        <Input titleLabel="" sx={{width:"70px",height:"40px !important",textAlign:"center"}} value={time} characterLimit={4} onChange={(e:any)=>{handleTimeChange(e)}} onBlur={handleBlur}/>
-    )
+  it("adds colon after two digits", () => {
+    const mockSetTime = jest.fn();
+    render(<TimeInput time="" setTime={mockSetTime} />);
+    const input = screen.getByRole("textbox");
 
-}
+    fireEvent.change(input, { target: { value: "12" } });
+    expect(mockSetTime).toHaveBeenCalledWith("12:");
+  });
 
-export default TimeInput;
+  it("does not allow invalid hours", () => {
+    const mockSetTime = jest.fn();
+    render(<TimeInput time="" setTime={mockSetTime} />);
+    const input = screen.getByRole("textbox");
+
+    fireEvent.change(input, { target: { value: "25:00" } });
+    expect(mockSetTime).not.toHaveBeenCalled();
+  });
+
+  it("does not allow invalid minutes", () => {
+    const mockSetTime = jest.fn();
+    render(<TimeInput time="" setTime={mockSetTime} />);
+    const input = screen.getByRole("textbox");
+
+    fireEvent.change(input, { target: { value: "12:75" } });
+    expect(mockSetTime).not.toHaveBeenCalled();
+  });
+});
