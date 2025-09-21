@@ -1,38 +1,27 @@
-import React, { useState } from 'react';
-import { IcustomerProps } from '../../customer-profile';
-import { Box, Input, Typography, Button } from '@ucl/ui-components';
+// ActionButton.test.tsx
+import React from "react";
+import { render, screen } from "@testing-library/react";
+import ActionButton from "./ActionButton";
 
-import '../../customer-profile.css';
-const ActionButton = ({ customer, setCustomer }: IcustomerProps) => {
-  return (
-    <Box className="main-container">
-      <Input titleLabel="TMCC Case" sx={{ width: '160px' }} />
+describe("ActionButton Component", () => {
+  it("renders input field", () => {
+    render(<ActionButton customer={{}} setCustomer={() => {}} />);
+    const input = screen.getByLabelText("TMCC Case");
+    expect(input).toBeTruthy();
+  });
 
-      <Button
-        sx={{ width: '170px' }}
-        className="button"
-        variant="primary"
-        children="Save Draft"
-      />
-      <Button
-        sx={{ width: '170px' }}
-        className="button"
-        variant="primary"
-        children="Save and Exit"
-      />
-      <Button
-        sx={{ width: '170px' }}
-        className="button"
-        variant="primary"
-        children="Request for Approval"
-      />
-      <Button
-        sx={{ width: '170px' }}
-        className="button"
-        variant="primary"
-        children="Cancel"
-      />
-    </Box>
-  );
-};
-export default ActionButton;
+  it("renders all buttons", () => {
+    render(<ActionButton customer={{}} setCustomer={() => {}} />);
+
+    expect(screen.getByText("Save Draft")).toBeTruthy();
+    expect(screen.getByText("Save and Exit")).toBeTruthy();
+    expect(screen.getByText("Request for Approval")).toBeTruthy();
+    expect(screen.getByText("Cancel")).toBeTruthy();
+  });
+
+  it("renders correct number of buttons", () => {
+    render(<ActionButton customer={{}} setCustomer={() => {}} />);
+    const buttons = screen.getAllByRole("button");
+    expect(buttons.length).toBe(4);
+  });
+});
