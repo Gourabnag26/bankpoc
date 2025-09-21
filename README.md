@@ -1,77 +1,38 @@
-import React from "react";
-import { render, screen, fireEvent } from "@testing-library/react";
-import RadioGroup from "./RadioGroup";
+import React, { useState } from 'react';
+import { IcustomerProps } from '../../customer-profile';
+import { Box, Input, Typography, Button } from '@ucl/ui-components';
 
-describe("RadioGroup Component", () => {
-  const options = [
-    { label: "Email", value: "email" },
-    { label: "Phone", value: "phone" },
-  ];
+import '../../customer-profile.css';
+const ActionButton = ({ customer, setCustomer }: IcustomerProps) => {
+  return (
+    <Box className="main-container">
+      <Input titleLabel="TMCC Case" sx={{ width: '160px' }} />
 
-  it("renders all radio options", () => {
-    render(
-      <RadioGroup
-        name="contactMethod"
-        options={options}
-        selectedValue=""
-        onChange={jest.fn()}
+      <Button
+        sx={{ width: '170px' }}
+        className="button"
+        variant="primary"
+        children="Save Draft"
       />
-    );
-
-    expect(screen.getByLabelText("Email")).toBeTruthy();
-    expect(screen.getByLabelText("Phone")).toBeTruthy();
-  });
-
-  it("marks the selected value correctly", () => {
-    render(
-      <RadioGroup
-        name="contactMethod"
-        options={options}
-        selectedValue="phone"
-        onChange={jest.fn()}
+      <Button
+        sx={{ width: '170px' }}
+        className="button"
+        variant="primary"
+        children="Save and Exit"
       />
-    );
-
-    const phoneRadio = screen.getByLabelText("Phone") as HTMLInputElement;
-    const emailRadio = screen.getByLabelText("Email") as HTMLInputElement;
-
-    expect(phoneRadio.checked).toBe(true);
-    expect(emailRadio.checked).toBe(false);
-  });
-
-  it("calls onChange when a different option is selected", () => {
-    const handleChange = jest.fn();
-    render(
-      <RadioGroup
-        name="contactMethod"
-        options={options}
-        selectedValue="email"
-        onChange={handleChange}
+      <Button
+        sx={{ width: '170px' }}
+        className="button"
+        variant="primary"
+        children="Request for Approval"
       />
-    );
-
-    fireEvent.click(screen.getByLabelText("Phone"));
-
-    expect(handleChange).toHaveBeenCalledTimes(1);
-    expect(handleChange).toHaveBeenCalledWith("phone");
-  });
-
-  it("does not call onChange when disabled", () => {
-    const handleChange = jest.fn();
-    render(
-      <RadioGroup
-        name="contactMethod"
-        options={options}
-        selectedValue="email"
-        onChange={handleChange}
-        disabled
+      <Button
+        sx={{ width: '170px' }}
+        className="button"
+        variant="primary"
+        children="Cancel"
       />
-    );
-
-    const phoneRadio = screen.getByLabelText("Phone") as HTMLInputElement;
-    expect(phoneRadio.disabled).toBe(true);
-
-    fireEvent.click(phoneRadio);
-    expect(handleChange).toHaveBeenCalledTimes(0);
-  });
-});
+    </Box>
+  );
+};
+export default ActionButton;
