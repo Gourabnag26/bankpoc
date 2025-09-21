@@ -1,77 +1,121 @@
-// AccountPopup.test.tsx
-import React from "react";
-import { render, screen, fireEvent } from "@testing-library/react";
-import AccountPopup from "./AccountPopup";
+import React, { useEffect } from 'react';
+import { useState } from 'react';
+import { IcustomerProps } from '../../customer-profile';
+import { Box, Checkbox, Select, Typography } from '@ucl/ui-components';
+import CardCheckbox from '../../../../components/checkbox-menu/checkbox-menu';
+import '../../customer-profile.css';
+const ApiCustomerConfig = ({ customer, setCustomer }: IcustomerProps) => {
+  const api_general_options = [
+    { id: 'acc_balance', label: 'Account Balance', value: 'Account Balance' },
+  ];
+  const api_rtp_options = [
+    {
+      id: 'ipa_create_credit',
+      label: 'Create Credit',
+      value: 'Instant Payments - Create Credit',
+    },
+    {
+      id: 'ipa_recieve_credit',
+      label: 'Retrieve Status',
+      value: 'Instant Payments - Receive Credit',
+    },
+  ];
+  const api_fednow_options = [
+    {
+      id: 'fednow_createcredit',
+      label: 'Create Credit',
+      value: 'FedNow - Create Credit',
+    },
+    {
+      id: 'fednow_recievecredit',
+      label: 'Retrieve Status',
+      value: 'FedNow - Receive Credit',
+    },
+  ];
+  const api_wire_options = [
+    {
+      id: 'wire_create_credit',
+      label: 'Create Credit',
+      value: 'Wire - Create Credit',
+    },
+    {
+      id: 'wire_retieve_credit',
+      label: 'Retrieve Status',
+      value: 'Wire - Retrieve Credit',
+    },
+    {
+      id: 'wire_webhook',
+      label: 'Webhook Status Update',
+      value: 'Wire - Webhook Retrieve',
+    },
+  ];
 
-describe("AccountPopup Component with mock data", () => {
-  it("renders all sections with mock data", () => {
-    render(<AccountPopup />);
+  const [apiGeneralValues, setApiGeneralValues] = useState<string[]>([]);
+  const [apiRTPValues, setApiRTPValues] = useState<string[]>([]);
+  const [apiFedNowValues, setApiFedNowValues] = useState<string[]>([]);
+  const [apiWiresValues, setApiWiresValues] = useState<string[]>([]);
+  const [isAllSelected, setIsAllSelected] = useState<boolean>(false);
+  useEffect(() => {
+    const allSelected =
+      apiGeneralValues.length === api_general_options.length &&
+      apiRTPValues.length === api_rtp_options.length &&
+      apiFedNowValues.length === api_fednow_options.length &&
+      apiWiresValues.length === api_wire_options.length;
+    setIsAllSelected(allSelected);
+  }, [apiGeneralValues, apiRTPValues, apiFedNowValues, apiWiresValues]);
 
-    // Header sections
-    expect(screen.getByText("Customer Info")).toBeTruthy();
-    expect(screen.getByText("Limits")).toBeTruthy();
-    expect(screen.getByText("Api")).toBeTruthy();
-
-    // Customer Info inputs
-    expect(screen.getByPlaceholderText("Customer Name")).toBeTruthy();
-    expect(screen.getByPlaceholderText("Account Number")).toBeTruthy();
-    expect(screen.getByPlaceholderText("Router Number")).toBeTruthy();
-
-    // Limits inputs
-    expect(screen.getByPlaceholderText("Transaction Limit")).toBeTruthy();
-    expect(screen.getByPlaceholderText("Daily Limit")).toBeTruthy();
-  });
-
-  it("handles Select all checkbox correctly with mock data", () => {
-    render(<AccountPopup />);
-
-    // Select all checkbox
-    const selectAllCheckbox = screen.getByLabelText("Select all") as HTMLInputElement;
-    expect(selectAllCheckbox.checked).toBe(false);
-
-    // Click select all
-    fireEvent.click(selectAllCheckbox);
-    expect(selectAllCheckbox.checked).toBe(true);
-
-    // All CardCheckbox options should be checked
-    const allLabels = [
-      "Account Balance",
-      "Create Credit", 
-      "Retrieve Status",
-      "Create Credit",
-      "Retrieve Status",
-      "Create Credit",
-      "Retrieve Status",
-      "Webhook Status Update",
-    ];
-
-    allLabels.forEach((label) => {
-      const checkbox = screen.getByLabelText(label) as HTMLInputElement;
-      expect(checkbox.checked).toBe(true);
-    });
-
-    // Click again to unselect all
-    fireEvent.click(selectAllCheckbox);
-    expect(selectAllCheckbox.checked).toBe(false);
-
-    allLabels.forEach((label) => {
-      const checkbox = screen.getByLabelText(label) as HTMLInputElement;
-      expect(checkbox.checked).toBe(false);
-    });
-  });
-
-  it("updates individual CardCheckbox selections", () => {
-    render(<AccountPopup />);
-
-    const generalCheckbox = screen.getByLabelText("Account Balance") as HTMLInputElement;
-    expect(generalCheckbox.checked).toBe(false);
-
-    // Click individual checkbox
-    fireEvent.click(generalCheckbox);
-    expect(generalCheckbox.checked).toBe(true);
-
-    // Select all should remain false
-    const selectAllCheckbox = screen.getByLabelText("Select all") as HTMLInputElement;
-    expect(selectAllCheckbox.checked).toBe(false);
-  });
-});
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setApiGeneralValues(api_general_options.map((c) => c.id));
+      setApiRTPValues(api_rtp_options.map((c) => c.id));
+      setApiFedNowValues(api_fednow_options.map((c) => c.id));
+      setApiWiresValues(api_wire_options.map((c) => c.id));
+    } else {
+      setApiGeneralValues([]);
+      setApiRTPValues([]);
+      setApiFedNowValues([]);
+      setApiWiresValues([]);
+    }
+  };
+  return (
+    <Box className="section">
+      <Box className="group-head">
+        <Typography variant="h3" className="main-header" fontStyle="italic">
+          Api
+        </Typography>
+        <Checkbox
+          label="Select all"
+          checked={isAllSelected}
+          onChange={(e: any) => handleSelectAll(e.target.checked)}
+        />
+      </Box>
+      <Box className="checkbox-container sub-section">
+        <CardCheckbox
+          title="General"
+          checkboxes={api_general_options}
+          selectedValues={apiGeneralValues}
+          onChange={setApiGeneralValues}
+        />
+        <CardCheckbox
+          title="US RTP"
+          checkboxes={api_rtp_options}
+          selectedValues={apiRTPValues}
+          onChange={setApiRTPValues}
+        />
+        <CardCheckbox
+          title="FedNow"
+          checkboxes={api_fednow_options}
+          selectedValues={apiFedNowValues}
+          onChange={setApiFedNowValues}
+        />
+        <CardCheckbox
+          title="Wire"
+          checkboxes={api_wire_options}
+          selectedValues={apiWiresValues}
+          onChange={setApiWiresValues}
+        />
+      </Box>
+    </Box>
+  );
+};
+export default ApiCustomerConfig;
