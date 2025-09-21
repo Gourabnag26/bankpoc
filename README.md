@@ -1,80 +1,133 @@
-import React, { useState } from "react";
+import React, {
+
+  useState,
+  useMemo,
+  
+} from 'react';
+import "../../pages/customer-profile/customer-profile.css"
 import {
-  Box,
-  Typography,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Input,
   Button,
-  Dialog,
-} from "@ucl/ui-components";
-import { useLocation } from "react-router-dom";
-import CustomerDetail from "./components/customer-info/customer-info";
-import BusinessContact from "./components/business-contact/business-contact";
-import TechnicalContact from "./components/technical-contact/technical-contact";
-import TransactionLimit from "./components/transaction-limit/transaction-limit";
-import ApiCustomerConfig from "./components/api-customer/api-customer";
-import AccountPopup from "../../components/account-popup/account-popup";
-import AccountSearchTable from "../../components/account-table/account-table";
+  ShowIcon,
+  EditIcon,
+  DeleteIcon,
+  Box
+} from '@ucl/ui-components';
 
-export const CustomerProfile = () => {
-  const location = useLocation();
-  const searchParams = new URLSearchParams(location.search);
-  const role = searchParams.get("role");
-
-  const isViewMode = role === "view"; // true if ?role=view
-
-  const initialCustomerData = {
-    customerName: "",
-    cisNumber: 1,
-    customerType: "Commericial",
-    billingProfileId: "",
-    demoCustomer: "Yes",
-    businessContactName: "",
-    businessContactEmail: "",
-    businessContactPhone: "",
-    businessContactPreferredMethod: "Email",
-    technologyContactName: "",
-    technologyContactEmail: "",
-    technologyContactPhone: "",
-    technologyContactPreferredMethod: "Email",
-    transactionLimit: 0,
-    dailyLimit: 0,
-    processingWindowStartTime: "00:00",
-    processingWindowEndTime: "24:00",
-    processingWindowZone: "GMT",
+const AccountSearchTable = () => {
+  const [accountName, setAccountName] = useState('');
+  const [accountNumber, setAccountNumber] = useState('');
+  const [filters, setFilters] = useState({
+    accountName: '',
+    accountNumber: '',
+  });
+  const setAppliedFilter = (obj: any) => {
+    setFilters(obj);
   };
-
-  const [customer, setCustomer] = useState(initialCustomerData);
-  const [accountPopup, setAccountPopup] = useState(false);
+  const tableHeaders: any = ['Account Name ', 'Account  Number','Routing Number','Action'];
+  const data: any = [
+    {
+      account_name: 'Checking Account one',
+      account_number: '12231',
+      routing_number: '1244',
+    },
+    {
+      account_name: 'Checking Account two',
+      account_number: '12232',
+      routing_number: '1245',
+    },
+    {
+      account_name: 'Checking Account three',
+      account_number: '12233',
+      routing_number: '1246',
+    },
+    {
+      account_name: 'Checking Account four',
+      account_number: '12234',
+      routing_number: '1247',
+    },
+  ];
+  const FilteredData = useMemo(() => {
+    console.log('filters are', filters);
+    return data.filter((row: any) => {
+      return (
+        (!filters.accountName ||
+          row.account_name
+            .toLowerCase()
+            .includes(filters.accountName.toLowerCase())) &&
+        (!filters.accountNumber ||
+          row.account_number
+            .toLowerCase()
+            .includes(filters.accountNumber.toLowerCase()))
+      );
+    });
+  }, [filters]);
 
   return (
-    <Box className="main-profile">
-      <CustomerDetail customer={customer} setCustomer={setCustomer} disabled={isViewMode} />
-      <BusinessContact customer={customer} setCustomer={setCustomer} disabled={isViewMode} />
-      <TechnicalContact customer={customer} setCustomer={setCustomer} disabled={isViewMode} />
-      <TransactionLimit customer={customer} setCustomer={setCustomer} disabled={isViewMode} />
-      <ApiCustomerConfig customer={customer} setCustomer={setCustomer} disabled={isViewMode} />
-
-      <Box className="section">
-        <Box className="group-head">
-          <Typography variant="h3" className="main-header" fontStyle="italic">
-            Account Access & Preferences
-          </Typography>
-          <Button
-            className="button"
-            variant="primary"
-            children="Add Account"
-            onClick={() => setAccountPopup(true)}
-            disabled={isViewMode} // disable button in view mode
-          />
-          <Dialog
-            dialogContent={<AccountPopup />}
-            dialogTitle="TIST"
-            open={accountPopup}
-            onClose={() => setAccountPopup(false)}
-            fullWidth
-          />
-        </Box>
-        <AccountSearchTable />
+    <Box sx={{marginTop:"30px"}}>
+      <Box className="main-container">
+        <Input
+          titleLabel="Account Name"
+          value={accountName}
+          className="main-input"
+       
+          onChange={(e) => {
+            setAccountName(e.target.value);
+          }}
+        />
+        <Input
+          titleLabel="Account Number"
+          value={accountNumber}
+          className="main-input"
+          onChange={(e) => {
+            setAccountNumber(e.target.value);
+          }}
+        />
+        <Button
+          variant="primary"
+          className="button"
+          onClick={() => {
+            setAppliedFilter({
+              accountName: accountName,
+              accountNumber: accountNumber,
+            });
+          }}
+          children="Search"
+        />
       </Box>
+    <TableContainer >
+        <Table>
+          <TableHead>
+            <TableRow>
+              {tableHeaders.map((head: any, key: any) => (
+                <TableCell key={key}>{head}</TableCell>
+              ))}
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {FilteredData.map((data: any) => (
+              <TableRow key={data.account_name}>
+                <TableCell>{data.account_name}</TableCell>
+                <TableCell>{data.account_number}</TableCell>
+
+                <TableCell>{data.routing_number}</TableCell>
+                <TableCell style={{ display: 'flex', gap: '5px' }}>
+                  <ShowIcon />
+                  <EditIcon />
+                  <DeleteIcon />
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
     </Box>
   );
 };
+export default AccountSearchTable;
