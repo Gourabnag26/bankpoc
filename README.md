@@ -1,236 +1,75 @@
-import React, { useState, useEffect } from "react";
-import {
-  Box,
-  Input,
-  Typography,
-  Radio,
-  Checkbox,
-  Select,
-  Button,
-} from "@ucl/ui-components";
-import CardCheckbox from "../checkbox-menu/checkbox-menu";
+// AccountPopup.test.tsx
+import React from "react";
+import { render, screen, fireEvent } from "@testing-library/react";
+import AccountPopup from "./AccountPopup";
 
-const AccountPopup = () => {
-  const api_general_options = [
-    { id: "acc_balance", label: "Account Balance", value: "Account Balance" },
-  ];
-  const api_rtp_options = [
-    {
-      id: "ipa_create_credit",
-      label: "Create Credit",
-      value: "Instant Payments - Create Credit",
-    },
-    {
-      id: "ipa_recieve_credit",
-      label: "Retrieve Status",
-      value: "Instant Payments - Receive Credit",
-    },
-  ];
-  const api_fednow_options = [
-    { id: "fednow_createcredit", label: "Create Credit", value: "FedNow - Create Credit" },
-    { id: "fednow_recievecredit", label: "Retrieve Status", value: "FedNow - Receive Credit" },
-  ];
-  const api_wire_options = [
-    { id: "wire_create_credit", label: "Create Credit", value: "Wire - Create Credit" },
-    { id: "wire_retieve_credit", label: "Retrieve Status", value: "Wire - Retrieve Credit" },
-    { id: "wire_webhook", label: "Webhook Status Update", value: "Wire - Webhook Retrieve" },
-  ];
+describe("AccountPopup Component", () => {
+  it("renders header sections", () => {
+    render(<AccountPopup />);
+    expect(screen.getByText("Customer Info")).toBeTruthy();
+    expect(screen.getByText("Limits")).toBeTruthy();
+    expect(screen.getByText("Api")).toBeTruthy();
+  });
 
-  // individual checkbox states
-  const [apiGeneralValues, setApiGeneralValues] = useState<string[]>([]);
-  const [apiRTPValues, setApiRTPValues] = useState<string[]>([]);
-  const [apiFedNowValues, setApiFedNowValues] = useState<string[]>([]);
-  const [apiWiresValues, setApiWiresValues] = useState<string[]>([]);
+  it("renders Customer Info inputs", () => {
+    render(<AccountPopup />);
+    expect(screen.getByPlaceholderText("Customer Name")).toBeTruthy();
+    expect(screen.getByPlaceholderText("Account Number")).toBeTruthy();
+    expect(screen.getByPlaceholderText("Router Number")).toBeTruthy();
+  });
 
-  // select all state
-  const [isAllSelected, setIsAllSelected] = useState(false);
+  it("renders Limits inputs", () => {
+    render(<AccountPopup />);
+    expect(screen.getByPlaceholderText("Transaction Limit")).toBeTruthy();
+    expect(screen.getByPlaceholderText("Daily Limit")).toBeTruthy();
+  });
 
-  // Flatten all API ids for "Select all"
-  const allApiIds = [
-    ...api_general_options.map((c) => c.id),
-    ...api_rtp_options.map((c) => c.id),
-    ...api_fednow_options.map((c) => c.id),
-    ...api_wire_options.map((c) => c.id),
-  ];
+  it("handles Select all checkbox correctly", () => {
+    render(<AccountPopup />);
 
-  // Whenever any individual checkbox changes, update select all state
-  useEffect(() => {
-    const allSelected =
-      apiGeneralValues.length === api_general_options.length &&
-      apiRTPValues.length === api_rtp_options.length &&
-      apiFedNowValues.length === api_fednow_options.length &&
-      apiWiresValues.length === api_wire_options.length;
-    setIsAllSelected(allSelected);
-  }, [apiGeneralValues, apiRTPValues, apiFedNowValues, apiWiresValues]);
+    const selectAllCheckbox = screen.getByLabelText("Select all") as HTMLInputElement;
+    expect(selectAllCheckbox.checked).toBe(false);
 
-  // Handle select all
-  const handleSelectAllChange = (checked: boolean) => {
-    if (checked) {
-      setApiGeneralValues(api_general_options.map((c) => c.id));
-      setApiRTPValues(api_rtp_options.map((c) => c.id));
-      setApiFedNowValues(api_fednow_options.map((c) => c.id));
-      setApiWiresValues(api_wire_options.map((c) => c.id));
-    } else {
-      setApiGeneralValues([]);
-      setApiRTPValues([]);
-      setApiFedNowValues([]);
-      setApiWiresValues([]);
-    }
-  };
+    // Click select all
+    fireEvent.click(selectAllCheckbox);
 
-  return (
-    <>
-      {/* Customer Info Section */}
-      <Box className="section">
-        <Typography variant="h3" className="main-header" fontStyle="italic">
-          Customer Info
-        </Typography>
-        <Box sx={{ padding: "10px" }}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: "50px" }}>
-            <Input
-              className="main-input"
-              titleLabel="Customer Name"
-              placeholder="Customer Name"
-              sx={{ width: "250px", height: "40px", marginTop: "10px" }}
-            />
-            <Checkbox sx={{ width: "250px" }} label="Billing Account" />
-          </Box>
-          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <Input
-              className="main-input"
-              titleLabel="Account Number"
-              placeholder="Account Number"
-              sx={{ width: "250px", height: "40px", marginTop: "10px" }}
-            />
-            <Select
-              className="main-input"
-              value="10002"
-              title="Bank Code"
-              sx={{ width: "250px", height: "40px", marginTop: "15px" }}
-              options={[{ key: "10002", value: "10002", text: "10002" }]}
-            />
-          </Box>
-          <Box>
-            <Input
-              className="main-input"
-              titleLabel="Router Number"
-              placeholder="Router Number"
-              sx={{ width: "250px", height: "40px", marginTop: "10px" }}
-            />
-            <Input
-              className="main-input"
-              titleLabel="Authorized Transaction Account Routing Number"
-              placeholder="Authorized Transaction Account Routing Number"
-              sx={{ width: "250px", height: "40px", marginTop: "10px" }}
-            />
-          </Box>
-        </Box>
-      </Box>
+    // After clicking, checkbox should be checked
+    expect(selectAllCheckbox.checked).toBe(true);
 
-      {/* Limits Section */}
-      <Box className="section">
-        <Typography variant="h3" className="main-header" fontStyle="italic">
-          Limits
-        </Typography>
-        <Box sx={{ padding: "10px" }}>
-          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <Input
-              className="main-input"
-              titleLabel="Transaction Limit"
-              placeholder="Transaction Limit"
-              sx={{ width: "250px", height: "40px", marginTop: "10px" }}
-            />
-            <Input
-              className="main-input"
-              titleLabel="Daily Limit"
-              placeholder="Daily Limit"
-              sx={{ width: "250px", height: "40px", marginTop: "10px" }}
-            />
-          </Box>
-        </Box>
-      </Box>
+    // Now verify that "General" CardCheckbox is selected
+    const generalOption = screen.getByLabelText("Account Balance") as HTMLInputElement;
+    expect(generalOption.checked).toBe(true);
 
-      {/* API Section */}
-      <Box className="section">
-        <Box sx={{ display: "flex", alignItems: "center", gap: "30px" }}>
-          <Typography variant="h3" className="main-header" fontStyle="italic">
-            Api
-          </Typography>
-          <Checkbox
-            label="Select all"
-            checked={isAllSelected}
-            onChange={(e: any) => handleSelectAllChange(e.target.checked)}
-          />
-        </Box>
-        <Box
-          className="checkbox-container sub-section"
-          sx={{
-            display: "flex",
-            flexDirection: "row",
-            gap: "10px",
-            padding: "10px",
-            alignItems: "center",
-            flexWrap: "wrap",
-          }}
-        >
-          <CardCheckbox
-            title="General"
-            checkboxes={api_general_options}
-            selectedValues={apiGeneralValues}
-            onChange={setApiGeneralValues}
-          />
-          <CardCheckbox
-            title="US RTP"
-            checkboxes={api_rtp_options}
-            selectedValues={apiRTPValues}
-            onChange={setApiRTPValues}
-          />
-          <CardCheckbox
-            title="FedNow"
-            checkboxes={api_fednow_options}
-            selectedValues={apiFedNowValues}
-            onChange={setApiFedNowValues}
-          />
-          <CardCheckbox
-            title="Wire"
-            checkboxes={api_wire_options}
-            selectedValues={apiWiresValues}
-            onChange={setApiWiresValues}
-          />
-        </Box>
-      </Box>
+    // US RTP options
+    const rtpOption1 = screen.getByLabelText("Create Credit") as HTMLInputElement;
+    const rtpOption2 = screen.getByLabelText("Retrieve Status") as HTMLInputElement;
+    expect(rtpOption1.checked).toBe(true);
+    expect(rtpOption2.checked).toBe(true);
 
-      {/* Buttons */}
-      <Box sx={{ display: "flex", justifyContent: "center", gap: "10px", marginTop: "10px" }}>
-        <Button
-          sx={{
-            border: "1px solid black",
-            background: "#F5F5F5",
-            padding: "10px",
-            fontSize: "12px",
-            color: "black",
-            width: "150px",
-            borderRadius: "5px",
-          }}
-        >
-          Save
-        </Button>
-        <Button
-          sx={{
-            border: "1px solid black",
-            background: "#F5F5F5",
-            padding: "10px",
-            fontSize: "12px",
-            color: "black",
-            width: "150px",
-            borderRadius: "5px",
-          }}
-        >
-          Cancel
-        </Button>
-      </Box>
-    </>
-  );
-};
+    // FedNow options
+    const fednowOption1 = screen.getAllByLabelText("Create Credit")[1] as HTMLInputElement;
+    const fednowOption2 = screen.getAllByLabelText("Retrieve Status")[1] as HTMLInputElement;
+    expect(fednowOption1.checked).toBe(true);
+    expect(fednowOption2.checked).toBe(true);
 
-export default AccountPopup;
+    // Wire options
+    const wireOption1 = screen.getAllByLabelText("Create Credit")[2] as HTMLInputElement;
+    const wireOption2 = screen.getAllByLabelText("Retrieve Status")[2] as HTMLInputElement;
+    const wireOption3 = screen.getByLabelText("Webhook Status Update") as HTMLInputElement;
+    expect(wireOption1.checked).toBe(true);
+    expect(wireOption2.checked).toBe(true);
+    expect(wireOption3.checked).toBe(true);
+
+    // Click again to unselect all
+    fireEvent.click(selectAllCheckbox);
+    expect(selectAllCheckbox.checked).toBe(false);
+    expect(generalOption.checked).toBe(false);
+    expect(rtpOption1.checked).toBe(false);
+    expect(rtpOption2.checked).toBe(false);
+    expect(fednowOption1.checked).toBe(false);
+    expect(fednowOption2.checked).toBe(false);
+    expect(wireOption1.checked).toBe(false);
+    expect(wireOption2.checked).toBe(false);
+    expect(wireOption3.checked).toBe(false);
+  });
+});
