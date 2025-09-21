@@ -9,29 +9,30 @@ describe("CustomerDetail Component", () => {
 
   it("renders header text", () => {
     render(<CustomerDetail customer={mockCustomer} setCustomer={mockSetCustomer} />);
-    expect(screen.getByText(/Customer Info/i)).toBeInTheDocument();
+    const header = screen.getByText(/Customer Info/i);
+    expect(header).toBeTruthy();
   });
 
-  it("renders all input fields", () => {
+  it("renders input placeholders", () => {
     render(<CustomerDetail customer={mockCustomer} setCustomer={mockSetCustomer} />);
     
-    expect(screen.getByPlaceholderText("Customer Name")).toBeInTheDocument();
-    expect(screen.getByPlaceholderText("CIS Number")).toBeInTheDocument();
-    expect(screen.getByPlaceholderText("Billing profile Id")).toBeInTheDocument();
+    expect(screen.getByPlaceholderText("Customer Name")).toBeTruthy();
+    expect(screen.getByPlaceholderText("CIS Number")).toBeTruthy();
+    expect(screen.getByPlaceholderText("Billing profile Id")).toBeTruthy();
   });
 
-  it("renders select with correct options", () => {
+  it("renders select options", () => {
     render(<CustomerDetail customer={mockCustomer} setCustomer={mockSetCustomer} />);
     
-    expect(screen.getByText("Commercial")).toBeInTheDocument();
-    expect(screen.getByText("Internal")).toBeInTheDocument();
+    expect(screen.getByText("Commercial")).toBeTruthy();
+    expect(screen.getByText("Internal")).toBeTruthy();
   });
 
-  it("renders radio buttons for Demo Customer", () => {
+  it("renders radio buttons", () => {
     render(<CustomerDetail customer={mockCustomer} setCustomer={mockSetCustomer} />);
     
-    expect(screen.getByLabelText("Yes")).toBeInTheDocument();
-    expect(screen.getByLabelText("No")).toBeInTheDocument();
+    expect(screen.getByLabelText("Yes")).toBeTruthy();
+    expect(screen.getByLabelText("No")).toBeTruthy();
   });
 
   it("matches snapshot", () => {
