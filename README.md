@@ -1,49 +1,40 @@
-// TimeInput.test.tsx
 import React from "react";
-import { render, screen, fireEvent } from "@testing-library/react";
-import TimeInput from "./TimeInput";
+import { Box,Checkbox,Typography } from "@ucl/ui-components";
+interface ICheckboxOption{
+    id:string;
+    label:string;
+    value:string;
+}
 
-describe("TimeInput Component", () => {
-  it("renders with initial time", () => {
-    const mockSetTime = jest.fn();
-    render(<TimeInput time="10:30" setTime={mockSetTime} />);
-    const input = screen.getByDisplayValue("10:30");
-    expect(input).toBeTruthy();
-  });
+interface ICardCheckboxProps{
+    title:string;
+    checkboxes: ICheckboxOption[];
+    selectedValues : string[];
+    onChange: (newSelectedValues : string[])=> void;
+}
 
-  it("formats time on blur", () => {
-    const mockSetTime = jest.fn();
-    render(<TimeInput time="9:5" setTime={mockSetTime} />);
-    const input = screen.getByDisplayValue("9:5");
+const CardCheckbox=({title,checkboxes,selectedValues,onChange}:ICardCheckboxProps)=>{
+    console.log("selected",selectedValues);
+   const handleCheckboxChange=(id:string)=>{
+    const updated=selectedValues.includes(id)?selectedValues.filter((val)=>val!==id):[...selectedValues,id];
+    onChange(updated)
+   }
+   return(
+    <Box sx={{background:"#F8F8F8",padding:"10px",width:"250px",height:"200px", fontSize:"12px", border:"1px dotted black"}}>
+     <Typography variant="body1" >
+     {title}
+     </Typography>
+     <Box sx={{padding:'10px'}}>
+        {
+            checkboxes.map((checkbox:ICheckboxOption)=>(
+                <Checkbox label={checkbox.label} checked={selectedValues.includes(checkbox.id)} onChange={()=>{
+                    handleCheckboxChange(checkbox.id)
+                }}/>
+            ))
+        }
+     </Box>
+    </Box>
+   )
+}
 
-    fireEvent.blur(input);
-    expect(mockSetTime).toHaveBeenCalledWith("09:05");
-  });
-
-  it("adds colon after two digits", () => {
-    const mockSetTime = jest.fn();
-    render(<TimeInput time="" setTime={mockSetTime} />);
-    const input = screen.getByRole("textbox");
-
-    fireEvent.change(input, { target: { value: "12" } });
-    expect(mockSetTime).toHaveBeenCalledWith("12:");
-  });
-
-  it("does not allow invalid hours", () => {
-    const mockSetTime = jest.fn();
-    render(<TimeInput time="" setTime={mockSetTime} />);
-    const input = screen.getByRole("textbox");
-
-    fireEvent.change(input, { target: { value: "25:00" } });
-    expect(mockSetTime).not.toHaveBeenCalled();
-  });
-
-  it("does not allow invalid minutes", () => {
-    const mockSetTime = jest.fn();
-    render(<TimeInput time="" setTime={mockSetTime} />);
-    const input = screen.getByRole("textbox");
-
-    fireEvent.change(input, { target: { value: "12:75" } });
-    expect(mockSetTime).not.toHaveBeenCalled();
-  });
-});
+export default CardCheckbox
