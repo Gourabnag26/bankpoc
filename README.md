@@ -1,36 +1,41 @@
-// TransactionLimit.test.tsx
-import React from "react";
-import { render, screen } from "@testing-library/react";
-import TransactionLimit from "./TransactionLimit";
+import React from "react"
+import { Input, TextField } from "@ucl/ui-components"
 
-describe("TransactionLimit Component", () => {
-  const mockCustomer = {};
-  const mockSetCustomer = jest.fn();
 
-  it("renders header text", () => {
-    render(<TransactionLimit customer={mockCustomer} setCustomer={mockSetCustomer} />);
-    expect(screen.getByText("Limits")).toBeTruthy();
-  });
-
-  it("renders input placeholders", () => {
-    render(<TransactionLimit customer={mockCustomer} setCustomer={mockSetCustomer} />);
+interface ItimeInputProps{
+    time:string,
+    setTime:(value:string)=>void,
     
-    expect(screen.getByPlaceholderText("Transaction Limit")).toBeTruthy();
-    expect(screen.getByPlaceholderText("Daily Limit")).toBeTruthy();
-  });
+}
 
-  it("renders processing window section", () => {
-    render(<TransactionLimit customer={mockCustomer} setCustomer={mockSetCustomer} />);
-    
-    expect(screen.getByText("Processing Window")).toBeTruthy();
-  });
+const TimeInput=({time,setTime}:ItimeInputProps)=>{
+    const handleBlur=()=>{
+        if(!time)
+        return;
+       const [hours="",minutes=""]=time.split(":");
+       const formatedHours=hours.padStart(2,"0");
+       const formatedMinutes=minutes.padStart(2,"0");
+       setTime(`${formatedHours}:${formatedMinutes || "00"}`)
 
-  it("renders timezone options", () => {
-    render(<TransactionLimit customer={mockCustomer} setCustomer={mockSetCustomer} />);
-    
-    expect(screen.getByText("GMT")).toBeTruthy();
-    expect(screen.getByText("UTC")).toBeTruthy();
-    expect(screen.getByText("IST")).toBeTruthy();
-    expect(screen.getByText("CST")).toBeTruthy();
-  });
-});
+    }
+    const handleTimeChange=(e:any)=>{
+        let value=e.target.value;
+        value=value.replace(/[^0-9:]/g,"");
+        if(value.length==2 && ! value.includes(":"))
+        {
+            value=value+":"
+        }
+        const [hours,minutes]=value.split(":")
+        if(hours && Number(hours) >23)
+        return;
+        if(minutes && Number(minutes) >59 )
+        return;
+        setTime(value)
+    }
+    return(
+        <Input titleLabel="" sx={{width:"70px",height:"40px !important",textAlign:"center"}} value={time} characterLimit={4} onChange={(e:any)=>{handleTimeChange(e)}} onBlur={handleBlur}/>
+    )
+
+}
+
+export default TimeInput;
