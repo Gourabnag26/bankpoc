@@ -1,56 +1,41 @@
+// CustomerDetail.test.tsx
 import React from "react";
-import { IcustomerProps } from "../../customer-profile";
-import { Box, Input, Radio, RadioGroup, Select, Typography } from "@ucl/ui-components";
-import "../../customer-profile.css";
-const CustomerDetail=({customer,setCustomer}:IcustomerProps)=>{
-   return(
-     <Box className="section">
-        <Typography variant="h3" className="main-header" fontStyle="italic">
-          Customer Info
-        </Typography>
-        <Box className="sub-section">
-          <Box className="main-container">
-            <Input
-              className="main-input"
-              titleLabel="Customer Name"
-              placeholder="Customer Name"
-            />
-            <Input
-              className="main-input"
-              titleLabel="CIS Number"
-              placeholder="CIS Number"
-            />
-          </Box>
-          <Box className="main-container">
-            <Select
-              className="main-input"
-              value="Commercial"
-              options={[
-                { key: 'Commercial', value: 'Commercial', text: 'Commercial' },
-                { key: 'Internal', value: 'Internal', text: 'Internal' },
-              ]}
-              title="Customer Type"
-            />
-            <Input
-              className="main-input"
-              titleLabel="Billing Profile Id"
-              placeholder="Billing profile Id"
-            />
-          </Box>
-          <Box className="main-checkgroup">
-            <Typography variant="body1">Demo Customer :</Typography>
-            <RadioGroup
-              className="check-group"
-              defaultValue="Yes"
-              errorText=""
-              helperText=""
-            >
-              <Radio label="Yes" value="Yes" />
-              <Radio label="No" value="No" />
-            </RadioGroup>
-          </Box>
-        </Box>
-      </Box>
-   )
-}
-export default CustomerDetail
+import { render, screen } from "@testing-library/react";
+import CustomerDetail from "./CustomerDetail";
+
+describe("CustomerDetail Component", () => {
+  const mockCustomer = {};
+  const mockSetCustomer = jest.fn();
+
+  it("renders header text", () => {
+    render(<CustomerDetail customer={mockCustomer} setCustomer={mockSetCustomer} />);
+    expect(screen.getByText(/Customer Info/i)).toBeInTheDocument();
+  });
+
+  it("renders all input fields", () => {
+    render(<CustomerDetail customer={mockCustomer} setCustomer={mockSetCustomer} />);
+    
+    expect(screen.getByPlaceholderText("Customer Name")).toBeInTheDocument();
+    expect(screen.getByPlaceholderText("CIS Number")).toBeInTheDocument();
+    expect(screen.getByPlaceholderText("Billing profile Id")).toBeInTheDocument();
+  });
+
+  it("renders select with correct options", () => {
+    render(<CustomerDetail customer={mockCustomer} setCustomer={mockSetCustomer} />);
+    
+    expect(screen.getByText("Commercial")).toBeInTheDocument();
+    expect(screen.getByText("Internal")).toBeInTheDocument();
+  });
+
+  it("renders radio buttons for Demo Customer", () => {
+    render(<CustomerDetail customer={mockCustomer} setCustomer={mockSetCustomer} />);
+    
+    expect(screen.getByLabelText("Yes")).toBeInTheDocument();
+    expect(screen.getByLabelText("No")).toBeInTheDocument();
+  });
+
+  it("matches snapshot", () => {
+    const { asFragment } = render(<CustomerDetail customer={mockCustomer} setCustomer={mockSetCustomer} />);
+    expect(asFragment()).toMatchSnapshot();
+  });
+});
