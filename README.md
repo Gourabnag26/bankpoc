@@ -18,8 +18,8 @@ describe("RadioGroup Component", () => {
       />
     );
 
-    expect(screen.getByLabelText("Email")).toBeInTheDocument();
-    expect(screen.getByLabelText("Phone")).toBeInTheDocument();
+    expect(screen.getByLabelText("Email")).toBeTruthy();
+    expect(screen.getByLabelText("Phone")).toBeTruthy();
   });
 
   it("marks the selected value correctly", () => {
@@ -32,8 +32,11 @@ describe("RadioGroup Component", () => {
       />
     );
 
-    expect(screen.getByLabelText("Phone")).toBeChecked();
-    expect(screen.getByLabelText("Email")).not.toBeChecked();
+    const phoneRadio = screen.getByLabelText("Phone") as HTMLInputElement;
+    const emailRadio = screen.getByLabelText("Email") as HTMLInputElement;
+
+    expect(phoneRadio.checked).toBe(true);
+    expect(emailRadio.checked).toBe(false);
   });
 
   it("calls onChange when a different option is selected", () => {
@@ -65,10 +68,10 @@ describe("RadioGroup Component", () => {
       />
     );
 
-    const phoneRadio = screen.getByLabelText("Phone");
-    expect(phoneRadio).toBeDisabled();
+    const phoneRadio = screen.getByLabelText("Phone") as HTMLInputElement;
+    expect(phoneRadio.disabled).toBe(true);
 
     fireEvent.click(phoneRadio);
-    expect(handleChange).not.toHaveBeenCalled();
+    expect(handleChange).toHaveBeenCalledTimes(0);
   });
 });
