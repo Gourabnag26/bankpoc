@@ -1,49 +1,122 @@
-// ApiCustomerConfig.test.tsx
-import React from "react";
-import { render, screen, fireEvent } from "@testing-library/react";
-import ApiCustomerConfig from "./ApiCustomerConfig";
+import {
+  Box,
+  Container,
+  Typography,
+  Input,
+  Select,
+  Radio,
+  RadioGroup,
+  InputCounter,
+  Checkbox,
+  Button,
+} from '@ucl/ui-components';
+import TimeInput from '../../components/time-input/time-input';
+import { Dialog } from '@ucl/ui-components';
+import CardCheckbox from '../../components/checkbox-menu/checkbox-menu';
+import './customer-profile.css';
+import { Dispatch, useState } from 'react';
+import AccountSearchTable from '../../components/account-table/account-table';
+import AccountPopup from '../../components/account-popup/account-popup';
+import CustomerDetail from './components/customer-info/customer-info';
+import BusinessContact from './components/business-contact/business-contact';
+import TechnicalContact from './components/technical-contact/technical-contact';
+import TransactionLimit from './components/transaction-limit/transaction-limit';
+import ApiCustomerConfig from './components/api-customer/api-customer';
 
-describe("ApiCustomerConfig Component - Basic Tests", () => {
-  it("renders the main header and CardCheckbox titles", () => {
-    render(<ApiCustomerConfig customer={{}} setCustomer={jest.fn()} />);
+export interface ICustomerData{
+    customerName: string;
+    cisNumber: number;
+    customerType :'Commericial' | 'Internal';
+    billingProfileId: string;
+    demoCustomer: 'Yes' | 'No';
+    businessContactName :string;
+    businessContactEmail : string;
+    businessContactPhone : string;
+    businessContactPreferredMethod: 'Email' | 'Phone';
+    technologyContactName :string;
+    technologyContactEmail : string;
+    technologyContactPhone : string;
+    technologyContactPreferredMethod: 'Email' | 'Phone';
+    transactionLimit:number;
+    dailyLimit :number;
+    processingWindowStartTime: string
+    processingWindowEndTime : string
+    processingWindowZone : 'GMT' |'UTC' | 'CST' | 'IST'
 
-    // Header
-    expect(screen.getByText("Api")).toBeTruthy();
 
-    // CardCheckbox titles
-    expect(screen.getByText("General")).toBeTruthy();
-    expect(screen.getByText("US RTP")).toBeTruthy();
-    expect(screen.getByText("FedNow")).toBeTruthy();
-    expect(screen.getByText("Wire")).toBeTruthy();
-  });
+}
 
-  it("renders the Select all checkbox", () => {
-    render(<ApiCustomerConfig customer={{}} setCustomer={jest.fn()} />);
-    const selectAllCheckbox = screen.getByLabelText("Select all") as HTMLInputElement;
-    expect(selectAllCheckbox).toBeTruthy();
-    expect(selectAllCheckbox.checked).toBe(false);
-  });
+export interface IcustomerProps {
+  customer :ICustomerData,
+  setCustomer : React.Dispatch<React.SetStateAction<ICustomerData>>
+}
+export const CustomerProfile = () => {
 
-  it("checks and unchecks Select all checkbox", () => {
-    render(<ApiCustomerConfig customer={{}} setCustomer={jest.fn()} />);
-    const selectAllCheckbox = screen.getByLabelText("Select all") as HTMLInputElement;
+  
 
-    // Click to select all
-    fireEvent.click(selectAllCheckbox);
-    expect(selectAllCheckbox.checked).toBe(true);
+  const [accountPopup, setAccountPopup] = useState<boolean>(false);
 
-    // Click again to unselect all
-    fireEvent.click(selectAllCheckbox);
-    expect(selectAllCheckbox.checked).toBe(false);
-  });
+  const intitalCustomerData : ICustomerData ={
+    customerName: "",
+    cisNumber: 1,
+    customerType :"Commericial",
+    billingProfileId: "",
+    demoCustomer: "Yes",
+    businessContactName : "",
+    businessContactEmail : "",
+    businessContactPhone : "",
+    businessContactPreferredMethod: "Email",
+    technologyContactName : "",
+    technologyContactEmail : "",
+    technologyContactPhone : "",
+    technologyContactPreferredMethod: "Email",
+    transactionLimit:0,
+    dailyLimit :0,
+    processingWindowStartTime:"00:00",
+    processingWindowEndTime : "24:00",
+    processingWindowZone : 'GMT'
+  } 
+  const [customer,setCustomer]=useState<ICustomerData>(intitalCustomerData)
+  return (
+    <Box className="main-profile">
+      <CustomerDetail customer={customer} setCustomer={setCustomer}/>
+      <BusinessContact customer={customer} setCustomer={setCustomer}/>
+      <TechnicalContact customer={customer} setCustomer={setCustomer}/>
+      <TransactionLimit customer={customer} setCustomer={setCustomer}/>
+      <ApiCustomerConfig   customer={customer} setCustomer={setCustomer}/>
 
-  it("renders individual checkboxes inside CardCheckbox components", () => {
-    render(<ApiCustomerConfig customer={{}} setCustomer={jest.fn()} />);
-
-    // Check presence of a few known labels
-    expect(screen.getByLabelText("Account Balance")).toBeTruthy();
-    expect(screen.getByLabelText("Create Credit")).toBeTruthy();
-    expect(screen.getByLabelText("Retrieve Status")).toBeTruthy();
-    expect(screen.getByLabelText("Webhook Status Update")).toBeTruthy();
-  });
-});
+      <Box className="section">
+        <Box className="group-head">
+          <Typography variant="h3" className="main-header" fontStyle="italic">
+            Account Access& Preferences
+          </Typography>
+          <Button
+            className="button"
+            variant="primary"
+            children="Add Account"
+            onClick={() => {
+              setAccountPopup(true);
+            }}
+          />
+          <Dialog
+            dialogContent={<AccountPopup />}
+            dialogTitle="TIST"
+            open={accountPopup}
+            dialogActions={
+              <>
+                {() => {
+                  console.log('hi');
+                }}
+              </>
+            }
+            onClose={() => {
+              setAccountPopup(false);
+            }}
+            fullWidth
+          />
+        </Box>
+        <AccountSearchTable />
+      </Box>
+    </Box>
+  );
+};
