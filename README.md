@@ -88,3 +88,46 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({
 export const useAuth = () => {
   return useContext(AuthContext);
 };
+
+
+
+
+
+//data
+
+{
+"tableBody": [
+    {
+        "customerName":"Clark Kent",
+        "gatewayCustomerId":"6a4ea94-b029-4a59-94b4-54291f72ccfc",
+        "cisNumber": "1234567890",
+        "accountNumber": "8763678946"
+    },
+    { 
+        "customerName":"Anthony Stark",
+        "gatewayCustomerId":"32d7a2fa-fd51-4e15-af76-78a5c4eb1e6a",
+        "cisNumber": "1234567880",
+        "accountNumber": "8475629375"
+    },
+    {     
+        "customerName":"Steve Rogers",
+        "gatewayCustomerId":"77883a9e-070a-4dc5-aefc-e794fe4a2381",
+        "cisNumber": "1234567385",
+        "accountNumber": "9374579459"
+    },
+    {     
+        "customerName":"Bruce Wayne",
+        "gatewayCustomerId":"b9d4cb10-4b62-45a7-849d-82fbe7b9a761",
+        "cisNumber": "1234567550",
+        "accountNumber": "7539753874"
+    },
+    { 
+        "customerName":"Peter Parker",
+        "gatewayCustomerId":"ebc0ae64-cb26-4deb-b7c6-3d0a5acac1b7",
+        "cisNumber": "12449098768",
+        "accountNumber": "4627482947"
+    }
+    
+]}
+
+role = creator,editor, viewer ,approver current role can be any of them
