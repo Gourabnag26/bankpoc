@@ -1,68 +1,45 @@
 import React from "react";
-import { useSearchParams } from "react-router-dom";
-import { IcustomerProps } from "../../customer-profile";
-import { Box, Input, Button } from "@ucl/ui-components";
-import { useTaskContext } from "../../context/TaskContext"; // adjust path
+import { render, screen } from "@testing-library/react";
+import ActionButton from "./action-button";
+import { ICustomerData } from "../../customer-profile";
+import { MemoryRouter } from "react-router-dom";
 
-import "../../customer-profile.css";
+describe("ActionButton Component", () => {
+     const mockCustomer: ICustomerData = {
+        customerName: '',
+        cisNumber: 1,
+        customerType: 'Commericial',
+        billingProfileId: '',
+        demoCustomer: 'Yes',
+        businessContactName: '',
+        businessContactEmail: '',
+        businessContactPhone: '',
+        businessContactPreferredMethod: 'Email',
+        technologyContactName: '',
+        technologyContactEmail: '',
+        technologyContactPhone: '',
+        technologyContactPreferredMethod: 'Email',
+        transactionLimit: 0,
+        dailyLimit: 0,
+        processingWindowStartTime: '00:00',
+        processingWindowEndTime: '24:00',
+        processingWindowZone: 'GMT',
+      };
 
-const ActionButton = ({ customer, setCustomer }: IcustomerProps) => {
-  const [searchParams] = useSearchParams();
-  const customerId = searchParams.get("customerId");
 
-  const { myTasks, setMyTasks } = useTaskContext();
+  it("renders all buttons", () => {
+    <MemoryRouter></MemoryRouter>
+    render(<ActionButton customer={mockCustomer} setCustomer={() => ({})} disabled={false} />);
 
-  const handleStatusChange = (status: string) => {
-    if (!customerId) return;
+    expect(screen.getByText("Save Draft")).toBeTruthy();
+    expect(screen.getByText("Save and Exit")).toBeTruthy();
+    expect(screen.getByText("Request for Approval")).toBeTruthy();
+    expect(screen.getByText("Delete Draft")).toBeTruthy();
+  });
 
-    const updatedTasks = myTasks.map((task) =>
-      task.customerId === customerId ? { ...task, status } : task
-    );
-
-    setMyTasks(updatedTasks);
-  };
-
-  return (
-    <Box className="main-container">
-      <Input titleLabel="TMCC Case" sx={{ width: "160px" }} />
-
-      <Button
-        sx={{ width: "170px" }}
-        className="button"
-        variant="primary"
-        onClick={() => handleStatusChange("Draft")}
-      >
-        Save Draft
-      </Button>
-
-      <Button
-        sx={{ width: "170px" }}
-        className="button"
-        variant="primary"
-        onClick={() => handleStatusChange("Draft")}
-      >
-        Save and Exit
-      </Button>
-
-      <Button
-        sx={{ width: "170px" }}
-        className="button"
-        variant="primary"
-        onClick={() => handleStatusChange("Pending Approval")}
-      >
-        Request for Approval
-      </Button>
-
-      <Button
-        sx={{ width: "170px" }}
-        className="button"
-        variant="primary"
-        onClick={() => handleStatusChange("Deleted")}
-      >
-        Delete Draft
-      </Button>
-    </Box>
-  );
-};
-
-export default ActionButton;
+  it("renders correct number of buttons", () => {
+    render(<ActionButton customer={mockCustomer} setCustomer={() => ({})} disabled={false}  />);
+    const buttons = screen.getAllByRole("button");
+    expect(buttons.length).toBe(4);
+  });
+});
