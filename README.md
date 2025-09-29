@@ -1,52 +1,52 @@
-import React from "react";
-import { render, screen } from "@testing-library/react";
-import ActionButton from "./action-button";
-import { ICustomerData } from "../../customer-profile";
-import { MemoryRouter } from "react-router-dom";
+import { AxiosRequestConfig } from 'axios';
+import { InternalAxiosRequestConfig } from 'axios';
+import { OktaAuth } from '@okta/okta-auth-js';
+import { HttpService } from '../../http';
+import { environment } from 'src/environments/environment';
 
-describe("ActionButton Component", () => {
-  const mockCustomer: ICustomerData = {
-    customerName: "",
-    cisNumber: 1,
-    customerType: "Commericial",
-    billingProfileId: "",
-    demoCustomer: "Yes",
-    businessContactName: "",
-    businessContactEmail: "",
-    businessContactPhone: "",
-    businessContactPreferredMethod: "Email",
-    technologyContactName: "",
-    technologyContactEmail: "",
-    technologyContactPhone: "",
-    technologyContactPreferredMethod: "Email",
-    transactionLimit: 0,
-    dailyLimit: 0,
-    processingWindowStartTime: "00:00",
-    processingWindowEndTime: "24:00",
-    processingWindowZone: "GMT",
-  };
+export const LOGIN_ENDPOINT = environment.services.login.URL_PATH;
+export const ENTITLEMENTS_ENDPOINT = environment.services.entitlements.URL_PATH;
+export const LOGOUT_ENDPOINT = environment.services.logout.URL_PATH;
+export const EXTEND_SESSION_ENDPOINT = environment.services.extend.URL_PATH;
 
-  it("renders all buttons", () => {
-    render(
-      <MemoryRouter initialEntries={["/test?customerId=123"]}>
-        <ActionButton customer={mockCustomer} setCustomer={() => ({})} disabled={false} />
-      </MemoryRouter>
+const BASE_URL = process.env.BASE_URL || '';
+
+export class UserInitServiceApi {
+  static TOKEN = Symbol('UserInitApi');
+  private readonly httpService: HttpService;
+
+  constructor() {
+    this.httpService = new HttpService(BASE_URL);
+  }
+
+  async login(data: any, options?: AxiosRequestConfig) {
+    return this.httpService.post(LOGIN_ENDPOINT, data, options);
+  }
+
+  async logout(options?: AxiosRequestConfig) {
+    return this.httpService.delete(LOGOUT_ENDPOINT, options);
+  }
+
+  async extendSession(data: any, options?: AxiosRequestConfig) {
+    return this.httpService.patch(EXTEND_SESSION_ENDPOINT, data, options);
+  }
+
+  async getEntitlements(options?: AxiosRequestConfig) {
+    return this.httpService.get(ENTITLEMENTS_ENDPOINT, options);
+  }
+
+  addAuthHeader(oktaAuth: OktaAuth) {
+    return this.httpService.getAxiosInstance().interceptors.request.use(
+      async (request: InternalAxiosRequestConfig) => {
+        request.headers = request.headers || {};
+        if (oktaAuth) {
+          request.headers['Authorization'] = oktaAuth.getAccessToken();
+        }
+        return request;
+      },
+      (error: any) => {
+        return Promise.reject(error);
+      }
     );
-
-    expect(screen.getByText("Save Draft")).toBeTruthy();
-    expect(screen.getByText("Save and Exit")).toBeTruthy();
-    expect(screen.getByText("Request for Approval")).toBeTruthy();
-    expect(screen.getByText("Delete Draft")).toBeTruthy();
-  });
-
-  it("renders correct number of buttons", () => {
-    render(
-      <MemoryRouter initialEntries={["/test?customerId=123"]}>
-        <ActionButton customer={mockCustomer} setCustomer={() => ({})} disabled={false} />
-      </MemoryRouter>
-    );
-
-    const buttons = screen.getAllByRole("button");
-    expect(buttons.length).toBe(4);
-  });
-});
+  }
+}
