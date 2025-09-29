@@ -1,15 +1,11 @@
-import { AxiosRequestConfig } from 'axios';
-import { InternalAxiosRequestConfig } from 'axios';
-import { OktaAuth } from '@okta/okta-auth-js';
-import { HttpService } from '../../http';
-import { environment } from 'src/environments/environment';
+import { AxiosRequestConfig, InternalAxiosRequestConfig } from 'axios';
+import { HttpService } from '../../http'; // ✅ your existing HttpService
 
-export const LOGIN_ENDPOINT = environment.services.login.URL_PATH;
-export const ENTITLEMENTS_ENDPOINT = environment.services.entitlements.URL_PATH;
-export const LOGOUT_ENDPOINT = environment.services.logout.URL_PATH;
-export const EXTEND_SESSION_ENDPOINT = environment.services.extend.URL_PATH;
+// ✅ Hardcoded Base URL for testing
+const BASE_URL = 'https://api.openweathermap.org/data/2.5';
 
-const BASE_URL = process.env.BASE_URL || '';
+// ✅ Sample endpoint
+const WEATHER_ENDPOINT = '/weather';
 
 export class UserInitServiceApi {
   static TOKEN = Symbol('UserInitApi');
@@ -19,34 +15,49 @@ export class UserInitServiceApi {
     this.httpService = new HttpService(BASE_URL);
   }
 
-  async login(data: any, options?: AxiosRequestConfig) {
-    return this.httpService.post(LOGIN_ENDPOINT, data, options);
-  }
-
-  async logout(options?: AxiosRequestConfig) {
-    return this.httpService.delete(LOGOUT_ENDPOINT, options);
-  }
-
-  async extendSession(data: any, options?: AxiosRequestConfig) {
-    return this.httpService.patch(EXTEND_SESSION_ENDPOINT, data, options);
-  }
-
-  async getEntitlements(options?: AxiosRequestConfig) {
-    return this.httpService.get(ENTITLEMENTS_ENDPOINT, options);
-  }
-
-  addAuthHeader(oktaAuth: OktaAuth) {
+  /**
+   * Dynamically adds API key to every outgoing request
+   * Call this once, for example at app startup or when user logs in
+   */
+  addAuthHeader(apiKey: string) {
     return this.httpService.getAxiosInstance().interceptors.request.use(
       async (request: InternalAxiosRequestConfig) => {
         request.headers = request.headers || {};
-        if (oktaAuth) {
-          request.headers['Authorization'] = oktaAuth.getAccessToken();
+
+        if (apiKey) {
+          // Add API key to headers
+          request.headers['x-api-key'] = apiKey; 
         }
+
         return request;
       },
-      (error: any) => {
-        return Promise.reject(error);
-      }
+      (error: any) => Promise.reject(error)
+    );
+  }
+
+  /**
+   * Example GET request
+   */
+  async getWeatherByCity(city: string, options?: AxiosRequestConfig) {
+    return this.httpService.get(
+      `${WEATHER_ENDPOINT}?q=${city}&units=metric`,
+      options
     );
   }
 }
+
+// ✅ Quick test
+(async () => {
+  const API_KEY = 'YOUR_API_KEY_HERE'; // <-- Replace with your actual API key
+  const api = new UserInitServiceApi();
+
+  // Dynamically add the key to headers
+  api.addAuthHeader(API_KEY);
+
+  try {
+    const response = await api.getWeatherByCity('London');
+    console.log('Weather Data for London:', response.data);
+  } catch (error) {
+    console.error('Error fetching weather data:', error);
+  }
+})();
