@@ -1,14 +1,10 @@
 import { AxiosRequestConfig, InternalAxiosRequestConfig } from 'axios';
-import { HttpService } from '../../http'; // ✅ your existing HttpService
+import { HttpService } from '../../http';
 
-// ✅ Hardcoded Base URL for testing
-const BASE_URL = 'https://api.openweathermap.org/data/2.5';
-
-// ✅ Sample endpoint
-const WEATHER_ENDPOINT = '/weather';
+const BASE_URL = 'https://api2ipa.dev1.lf3scomerica.net';
+const CUSTOMER_SEARCH_ENDPOINT = '/api/customer/v1/customer/search';
 
 export class UserInitServiceApi {
-  static TOKEN = Symbol('UserInitApi');
   private readonly httpService: HttpService;
 
   constructor() {
@@ -16,19 +12,15 @@ export class UserInitServiceApi {
   }
 
   /**
-   * Dynamically adds API key to every outgoing request
-   * Call this once, for example at app startup or when user logs in
+   * Add API key header once
    */
   addAuthHeader(apiKey: string) {
     return this.httpService.getAxiosInstance().interceptors.request.use(
       async (request: InternalAxiosRequestConfig) => {
         request.headers = request.headers || {};
-
-        if (apiKey) {
-          // Add API key to headers
-          request.headers['x-api-key'] = apiKey; 
-        }
-
+        request.headers['X-API-KEY'] = apiKey;   // ✅ attach your API key
+        request.headers['Accept'] = 'application/json';
+        request.headers['Content-Type'] = 'application/json';
         return request;
       },
       (error: any) => Promise.reject(error)
@@ -36,28 +28,17 @@ export class UserInitServiceApi {
   }
 
   /**
-   * Example GET request
+   * POST call for customer search
    */
-  async getWeatherByCity(city: string, options?: AxiosRequestConfig) {
-    return this.httpService.get(
-      `${WEATHER_ENDPOINT}?q=${city}&units=metric`,
-      options
-    );
+  async searchCustomer(
+    data: {
+      gatewayCustomerId: string;
+      customerName: string;
+      accountNumber: string;
+      cisNumber: string;
+    },
+    options?: AxiosRequestConfig
+  ) {
+    return this.httpService.post(CUSTOMER_SEARCH_ENDPOINT, data, options);
   }
 }
-
-// ✅ Quick test
-(async () => {
-  const API_KEY = 'YOUR_API_KEY_HERE'; // <-- Replace with your actual API key
-  const api = new UserInitServiceApi();
-
-  // Dynamically add the key to headers
-  api.addAuthHeader(API_KEY);
-
-  try {
-    const response = await api.getWeatherByCity('London');
-    console.log('Weather Data for London:', response.data);
-  } catch (error) {
-    console.error('Error fetching weather data:', error);
-  }
-})();
