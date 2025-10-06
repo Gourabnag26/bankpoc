@@ -121,3 +121,81 @@ const ApiCustomerConfig = ({ disabled }: IcustomerProps) => {
   );
 };
 export default ApiCustomerConfig;
+
+
+
+
+ "customerProducts": [
+        {
+            "id": null,
+            "name": "ACCOUNT_BALANCE_API",
+            "friendlyName": null,
+            "shortName": null,
+            "description": null,
+            "productSettings": null,
+            "enabled": true,
+            "billable": true,
+            "resources": [
+                {
+                    "name": "RETRIEVE_ACCOUNT_BALANCE",
+                    "friendlyName": null,
+                    "description": null,
+                    "enabled": true,
+                    "billable": true
+                }
+            ],
+            "paymentRails": null
+        },
+        {
+            "id": null,
+            "name": "INSTANT_PAYMENTS_API",
+            "friendlyName": null,
+            "shortName": null,
+            "description": null,
+            "productSettings": null,
+            "enabled": true,
+            "billable": true,
+            "resources": [
+                {
+                    "name": "CREATE_CREDIT_TRANSFER",
+                    "friendlyName": null,
+                    "description": null,
+                    "enabled": true,
+                    "billable": true
+                },
+                {
+                    "name": "RETRIEVE_CREDIT_TRANSFER",
+                    "friendlyName": null,
+                    "description": null,
+                    "enabled": true,
+                    "billable": true
+                }
+            ],
+            "paymentRails": [
+                {
+                    "name": "RTP",
+                    "friendlyName": null,
+                    "description": null,
+                    "paymentRailSettings": {
+                        "transactionLimit": 500000,
+                        "cumulativeTransactionLimit": 2000000,
+                        "duplicateCheckDuration": 0
+                    },
+                    "enabled": true,
+                    "billable": true
+                },
+                {
+                    "name": "FEDNOW",
+                    "friendlyName": null,
+                    "description": null,
+                    "paymentRailSettings": {
+                        "transactionLimit": 500000,
+                        "cumulativeTransactionLimit": 2000000,
+                        "duplicateCheckDuration": 0
+                    },
+                    "enabled": true,
+                    "billable": true
+                }
+            ]
+        }
+    ],
