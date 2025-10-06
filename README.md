@@ -9,7 +9,7 @@ import {
 } from '@ucl/ui-components';
 import CardCheckbox from '../checkbox-menu/checkbox-menu';
 
-const AccountPopup = ({account,disabled}:any) => {
+const AccountPopup = ({ account, disabled }: any) => {
   const api_general_options = [
     { id: 'acc_balance', label: 'Account Balance', value: 'Account Balance' },
   ];
@@ -59,10 +59,52 @@ const AccountPopup = ({account,disabled}:any) => {
   const [apiRTPValues, setApiRTPValues] = useState<string[]>([]);
   const [apiFedNowValues, setApiFedNowValues] = useState<string[]>([]);
   const [apiWiresValues, setApiWiresValues] = useState<string[]>([]);
-
   const [isAllSelected, setIsAllSelected] = useState(false);
-  
 
+  // ✅ Auto-load from account.products
+  useEffect(() => {
+    if (!account?.products) return;
+
+    let general = false;
+    let rtp = false;
+    let fednow = false;
+    let wires = false;
+
+    account.products.forEach((product: any) => {
+      // GENERAL
+      if (product.name === 'ACCOUNT_BALANCE_API') {
+        const retrieve = product.resources?.some(
+          (r: any) => r.name === 'RETRIEVE_ACCOUNT_BALANCE' && r.enabled
+        );
+        if (retrieve) general = true;
+      }
+
+      // RTP / FEDNOW / WIRES (INSTANT_PAYMENTS_API)
+      if (product.name === 'INSTANT_PAYMENTS_API') {
+        const createTransfer = product.resources?.some(
+          (r: any) => r.name === 'CREATE_CREDIT_TRANSFER' && r.enabled
+        );
+
+        if (createTransfer && product.paymentRails?.length) {
+          product.paymentRails.forEach((rail: any) => {
+            if (rail.enabled) {
+              if (rail.name === 'RTP') rtp = true;
+              if (rail.name === 'FEDNOW') fednow = true;
+              if (rail.name === 'WIRES') wires = true;
+            }
+          });
+        }
+      }
+    });
+
+    // ✅ Apply checkboxes based on computed flags
+    setApiGeneralValues(general ? api_general_options.map((o) => o.id) : []);
+    setApiRTPValues(rtp ? api_rtp_options.map((o) => o.id) : []);
+    setApiFedNowValues(fednow ? api_fednow_options.map((o) => o.id) : []);
+    setApiWiresValues(wires ? api_wire_options.map((o) => o.id) : []);
+  }, [account]);
+
+  // ✅ Keep "Select All" synced
   useEffect(() => {
     const allSelected =
       apiGeneralValues.length === api_general_options.length &&
@@ -93,6 +135,7 @@ const AccountPopup = ({account,disabled}:any) => {
       setApiFedNowValues([]);
       setApiWiresValues([]);
     }
+    setIsAllSelected(checked);
   };
 
   const sx = {
@@ -100,6 +143,7 @@ const AccountPopup = ({account,disabled}:any) => {
     height: '40px',
     margin: '10px',
   };
+
   return (
     <>
       <Box className="section">
@@ -160,7 +204,12 @@ const AccountPopup = ({account,disabled}:any) => {
               sx={sx}
             />
             <div style={{ marginLeft: '10px' }}></div>
-            <Checkbox disabled={disabled} checked={account?.billingAccount} sx={sx} label="Billing Account" />
+            <Checkbox
+              disabled={disabled}
+              checked={account?.billingAccount}
+              sx={sx}
+              label="Billing Account"
+            />
           </Box>
         </Box>
       </Box>
@@ -204,7 +253,7 @@ const AccountPopup = ({account,disabled}:any) => {
         </Box>
       </Box>
 
-      {/* API Section */}
+      {/* ✅ API Section */}
       <Box className="section">
         <Box sx={{ display: 'flex', alignItems: 'center', gap: '30px' }}>
           <Typography
@@ -222,6 +271,7 @@ const AccountPopup = ({account,disabled}:any) => {
             label="Select all"
             checked={isAllSelected}
             onChange={(e: any) => handleSelectAllChange(e.target.checked)}
+            disabled={disabled}
           />
         </Box>
         <Box
@@ -240,64 +290,69 @@ const AccountPopup = ({account,disabled}:any) => {
             checkboxes={api_general_options}
             selectedValues={apiGeneralValues}
             onChange={setApiGeneralValues}
+            disabled={disabled}
           />
           <CardCheckbox
             title="US RTP"
             checkboxes={api_rtp_options}
             selectedValues={apiRTPValues}
             onChange={setApiRTPValues}
+            disabled={disabled}
           />
           <CardCheckbox
             title="FedNow"
             checkboxes={api_fednow_options}
             selectedValues={apiFedNowValues}
             onChange={setApiFedNowValues}
+            disabled={disabled}
           />
           <CardCheckbox
             title="Wire"
             checkboxes={api_wire_options}
             selectedValues={apiWiresValues}
             onChange={setApiWiresValues}
+            disabled={disabled}
           />
         </Box>
       </Box>
 
-      {/* Buttons */}
-      {!disabled && <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'center',
-          gap: '10px',
-          marginTop: '10px',
-        }}
-      >
-        <Button
+      {!disabled && (
+        <Box
           sx={{
-            border: '1px solid black',
-            background: '#F5F5F5',
-            padding: '10px',
-            fontSize: '12px',
-            color: 'black',
-            width: '150px',
-            borderRadius: '5px',
+            display: 'flex',
+            justifyContent: 'center',
+            gap: '10px',
+            marginTop: '10px',
           }}
         >
-          Save
-        </Button>
-        <Button
-          sx={{
-            border: '1px solid black',
-            background: '#F5F5F5',
-            padding: '10px',
-            fontSize: '12px',
-            color: 'black',
-            width: '150px',
-            borderRadius: '5px',
-          }}
-        >
-          Cancel
-        </Button>
-      </Box>}
+          <Button
+            sx={{
+              border: '1px solid black',
+              background: '#F5F5F5',
+              padding: '10px',
+              fontSize: '12px',
+              color: 'black',
+              width: '150px',
+              borderRadius: '5px',
+            }}
+          >
+            Save
+          </Button>
+          <Button
+            sx={{
+              border: '1px solid black',
+              background: '#F5F5F5',
+              padding: '10px',
+              fontSize: '12px',
+              color: 'black',
+              width: '150px',
+              borderRadius: '5px',
+            }}
+          >
+            Cancel
+          </Button>
+        </Box>
+      )}
     </>
   );
 };
