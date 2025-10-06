@@ -1,26 +1,180 @@
-@GetMapping("/customer")
-    public Customer getCustomer(@Schema(description = "Gateway customer id") @RequestHeader(CustomHeaders.GATEWAY_CUSTOMER_ID) String gatewayCustomerId,
-                                @Schema(description = "Trace id") @RequestHeader(CustomHeaders.TRACE_ID) UUID traceId) {
-        log.info("Retrieving Customer info for : {}", gatewayCustomerId);
-        return customerConfigurationService.getCustomer(gatewayCustomerId);
-    }
-
-    @Event(operationName = ApiOperation.RETRIEVE_BILLING_TRANSACTIONS)
-    @GetMapping("/customer/billingTransaction")
-    public List<CustomerBillingTransaction> getBillingTransaction(@Schema(description = "Gateway customer id") @RequestHeader(CustomHeaders.GATEWAY_CUSTOMER_ID) String gatewayCustomerId,
-                                                                  @Schema(description = "Trace id") @RequestHeader(value = CustomHeaders.TRACE_ID) UUID traceId,
-                                                                  @Schema(description = "Billing account Number") @RequestHeader(value = CustomHeaders.BILLING_ACCOUNT_NUMBER, required = false) String billingAccountNumber,
-                                                                  @Schema(description = "Transaction Account Number") @RequestHeader(value = CustomHeaders.TRANSCATION_ACCOUNT_NUMBER, required = false) String accountNumber,
-                                                                  @Schema(description = "From Date") @RequestHeader(value = CustomHeaders.FROM_DATE, required = false) LocalDateTime fromDate,
-                                                                  @Schema(description = "To Date") @RequestHeader(value = CustomHeaders.TO_DATE, required = false) LocalDateTime toDate) {
-        log.info("Retrieving billing transaction info for : {}", gatewayCustomerId);
-        return customerBillingTransactionsService.findBillingTransactions(gatewayCustomerId, billingAccountNumber, accountNumber, fromDate, toDate);
-    }
-
-    @Event(operationName = ApiOperation.UPDATE_BILLING_TRANSACTION)
-    @PostMapping("/customer/billingTransaction")
-    public CustomerBillingTransaction persistBillingTransaction(@Schema(description = "Gateway customer id") @RequestHeader(CustomHeaders.GATEWAY_CUSTOMER_ID) String gatewayCustomerId,
-                                                                @Schema(description = "Trace id") @RequestHeader(value = CustomHeaders.TRACE_ID) UUID traceId,
-                                                                @Schema(description = "Customer Billing Transaction bean") @Valid @RequestBody CustomerBillingTransaction customerBillingTransaction) {
-        return customerBillingTransactionsService.persistCustomerBillingTransactions(customerBillingTransaction, traceId.toString());
-    }
+{
+    "gatewayCustomerId": "e659aa04-65fc-42f4-8133-32b9cf9040e8",
+    "name": "Test",
+    "cisNumbers": [
+        "100100100155"
+    ],
+    "enabled": true,
+    "customerSettings": {
+        "transactionLimit": 1000000,
+        "cumulativeTransactionLimit": 5000000,
+        "processingWindow": "00:00-23:59",
+        "processingWindowTimezone": "CST"
+    },
+    "customerType": "COMMERCIAL",
+    "virtualAcctCustomer": false,
+    "demoCustomer": true,
+    "customerAccounts": [
+        {
+            "number": "1000100010055",
+            "name": "CBNK00001_00008",
+            "routingNumber": "072000096",
+            "bankCode": "10002",
+            "cisNumbers": [
+                "100100100155"
+            ],
+            "accountSettings": {
+                "transactionLimit": 100,
+                "cumulativeTransactionLimit": 10000
+            },
+            "billingAccount": true,
+            "enabled": true,
+            "products": [
+                {
+                    "id": null,
+                    "name": "INSTANT_PAYMENTS_API",
+                    "friendlyName": null,
+                    "shortName": null,
+                    "description": null,
+                    "productSettings": null,
+                    "enabled": true,
+                    "billable": true,
+                    "resources": [
+                        {
+                            "name": "CREATE_CREDIT_TRANSFER",
+                            "friendlyName": null,
+                            "description": null,
+                            "enabled": true,
+                            "billable": true
+                        },
+                        {
+                            "name": "RETRIEVE_CREDIT_TRANSFER",
+                            "friendlyName": null,
+                            "description": null,
+                            "enabled": true,
+                            "billable": true
+                        }
+                    ],
+                    "paymentRails": [
+                        {
+                            "name": "RTP",
+                            "friendlyName": null,
+                            "description": null,
+                            "paymentRailSettings": {
+                                "transactionLimit": 100,
+                                "cumulativeTransactionLimit": 10000,
+                                "duplicateCheckDuration": 0,
+                                "allowedCreditAccountList": [
+                                    {
+                                        "accountNumber": "{\"accountNumber\": \"123456789\", \"routingNumber\": \"123456789\"}",
+                                        "routingNumber": null
+                                    }
+                                ]
+                            },
+                            "enabled": true,
+                            "billable": true
+                        }
+                    ]
+                }
+            ]
+        }
+    ],
+    "customerProducts": [
+        {
+            "id": null,
+            "name": "ACCOUNT_BALANCE_API",
+            "friendlyName": null,
+            "shortName": null,
+            "description": null,
+            "productSettings": null,
+            "enabled": true,
+            "billable": true,
+            "resources": [
+                {
+                    "name": "RETRIEVE_ACCOUNT_BALANCE",
+                    "friendlyName": null,
+                    "description": null,
+                    "enabled": true,
+                    "billable": true
+                }
+            ],
+            "paymentRails": null
+        },
+        {
+            "id": null,
+            "name": "INSTANT_PAYMENTS_API",
+            "friendlyName": null,
+            "shortName": null,
+            "description": null,
+            "productSettings": null,
+            "enabled": true,
+            "billable": true,
+            "resources": [
+                {
+                    "name": "CREATE_CREDIT_TRANSFER",
+                    "friendlyName": null,
+                    "description": null,
+                    "enabled": true,
+                    "billable": true
+                },
+                {
+                    "name": "RETRIEVE_CREDIT_TRANSFER",
+                    "friendlyName": null,
+                    "description": null,
+                    "enabled": true,
+                    "billable": true
+                }
+            ],
+            "paymentRails": [
+                {
+                    "name": "RTP",
+                    "friendlyName": null,
+                    "description": null,
+                    "paymentRailSettings": {
+                        "transactionLimit": 500000,
+                        "cumulativeTransactionLimit": 2000000,
+                        "duplicateCheckDuration": 0
+                    },
+                    "enabled": true,
+                    "billable": true
+                },
+                {
+                    "name": "FEDNOW",
+                    "friendlyName": null,
+                    "description": null,
+                    "paymentRailSettings": {
+                        "transactionLimit": 500000,
+                        "cumulativeTransactionLimit": 2000000,
+                        "duplicateCheckDuration": 0
+                    },
+                    "enabled": true,
+                    "billable": true
+                }
+            ]
+        }
+    ],
+    "billingCustomerId": "SHB1001005",
+    "createdBy": "IPA",
+    "customerContacts": [
+        {
+            "contactName": "James",
+            "contactTitle": "QA Engineer",
+            "contactPhone": "129-000-0002",
+            "contactPhoneType": "MOBILE",
+            "contactEmail": "james.murphy@comerica.com",
+            "contactPreferredType": "Email",
+            "contactType": "SECONDARY",
+            "enabled": false
+        },
+        {
+            "contactName": "Ben Reynold",
+            "contactTitle": "Developer",
+            "contactPhone": "5309999999 ext 2345",
+            "contactPhoneType": "WORK",
+            "contactEmail": "ben.reynold@comerica.com",
+            "contactPreferredType": "Phone",
+            "contactType": "TERTIARY",
+            "enabled": false
+        }
+    ]
+}
