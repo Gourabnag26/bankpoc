@@ -1,360 +1,401 @@
 import React, { useEffect, useState } from 'react';
-import {
-  Box,
-  Button,
-  Checkbox,
-  Input,
-  Select,
-  Typography,
-} from '@ucl/ui-components';
-import CardCheckbox from '../checkbox-menu/checkbox-menu';
+import { Box } from '@ucl/ui-components';
+import { useLocation } from 'react-router-dom';
+import CustomerInfo from './components/customer-info/customer-info';
+import BusinessContact from './components/business-contact/business-contact';
+import TechnicalContact from './components/technical-contact/technical-contact';
+import TransactionLimit from './components/transaction-limit/transaction-limit';
+import ApiCustomerConfig from './components/api-customer/api-customer';
+import AccountPreference from './components/account-preference/account-preference';
+import ActionButton from './components/action-button/action-button';
+import { useCustomer } from 'src/context/customer-context';
+import { useNavigate } from 'react-router-dom';
 
-const AccountPopup = ({ account, disabled }: any) => {
-  const api_general_options = [
-    { id: 'acc_balance', label: 'Account Balance', value: 'Account Balance' },
-  ];
-  const api_rtp_options = [
-    {
-      id: 'ipa_create_credit',
-      label: 'Create Credit',
-      value: 'Instant Payments - Create Credit',
-    },
-    {
-      id: 'ipa_recieve_credit',
-      label: 'Retrieve Status',
-      value: 'Instant Payments - Receive Credit',
-    },
-  ];
-  const api_fednow_options = [
-    {
-      id: 'fednow_createcredit',
-      label: 'Create Credit',
-      value: 'FedNow - Create Credit',
-    },
-    {
-      id: 'fednow_recievecredit',
-      label: 'Retrieve Status',
-      value: 'FedNow - Receive Credit',
-    },
-  ];
-  const api_wire_options = [
-    {
-      id: 'wire_create_credit',
-      label: 'Create Credit',
-      value: 'Wire - Create Credit',
-    },
-    {
-      id: 'wire_retieve_credit',
-      label: 'Retrieve Status',
-      value: 'Wire - Retrieve Credit',
-    },
-    {
-      id: 'wire_webhook',
-      label: 'Webhook Status Update',
-      value: 'Wire - Webhook Retrieve',
-    },
-  ];
+export interface ICustomerData {
+  gatewayCustomerId: string;
+  name: string;
+  cisNumbers: string[];
+  enabled: boolean;
+  customerSettings: ICustomerSettings;
+  customerType: string;
+  virtualAcctCustomer: boolean;
+  demoCustomer: boolean;
+  customerAccounts: ICustomerAccount[];
+  customerProducts: ICustomerProduct[];
+  billingCustomerId: string;
+  createdBy: string;
+  customerContacts: ICustomerContact[];
+}
 
-  const [apiGeneralValues, setApiGeneralValues] = useState<string[]>([]);
-  const [apiRTPValues, setApiRTPValues] = useState<string[]>([]);
-  const [apiFedNowValues, setApiFedNowValues] = useState<string[]>([]);
-  const [apiWiresValues, setApiWiresValues] = useState<string[]>([]);
-  const [isAllSelected, setIsAllSelected] = useState(false);
+export interface ICustomerSettings {
+  transactionLimit: number;
+  cumulativeTransactionLimit: number;
+  processingWindow: string;
+  processingWindowTimezone: string;
+}
 
-  // ✅ Auto-load from account.products
+export interface ICustomerAccount {
+  number: string;
+  name: string;
+  routingNumber: string;
+  bankCode: string;
+  cisNumbers: string[];
+  accountSettings: IAccountSettings;
+  billingAccount: boolean;
+  enabled: boolean;
+  products: ICustomerProduct[];
+}
+
+export interface IAccountSettings {
+  transactionLimit: number;
+  cumulativeTransactionLimit: number;
+}
+
+export interface ICustomerProduct {
+  id: string | null;
+  name: string;
+  friendlyName: string | null;
+  shortName: string | null;
+  description: string | null;
+  productSettings: IProductSettings | null;
+  enabled: boolean;
+  billable: boolean;
+  resources: IProductResource[];
+  paymentRails: IPaymentRail[] | null;
+}
+
+export interface IProductSettings {
+  transactionLimit?: number;
+  cumulativeTransactionLimit?: number;
+  duplicateCheckDuration?: number;
+}
+
+export interface IProductResource {
+  name: string;
+  friendlyName: string | null;
+  description: string | null;
+  enabled: boolean;
+  billable: boolean;
+}
+
+export interface IPaymentRail {
+  name: string;
+  friendlyName: string | null;
+  description: string | null;
+  paymentRailSettings: IPaymentRailSettings;
+  enabled: boolean;
+  billable: boolean;
+}
+
+export interface IPaymentRailSettings {
+  transactionLimit: number;
+  cumulativeTransactionLimit: number;
+  duplicateCheckDuration: number;
+  allowedCreditAccountList?: IAllowedCreditAccount[];
+}
+
+export interface IAllowedCreditAccount {
+  accountNumber: string;
+  routingNumber: string | null;
+}
+
+export interface ICustomerContact {
+  contactName: string;
+  contactTitle: string;
+  contactPhone: string;
+  contactPhoneType: string;
+  contactEmail: string;
+  contactPreferredType: string;
+  contactType: string;
+  enabled: boolean;
+}
+
+export interface IcustomerProps {
+  customer: ICustomerData;
+  setCustomer: React.Dispatch<React.SetStateAction<ICustomerData>>;
+  disabled: boolean;
+  gatewayCustomerId?: any;
+  mode?: any;
+}
+
+export const CustomerProfile = () => {
+  const { myTasks, setMyTasks, customers } = useCustomer();
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const role = searchParams.get('role');
+  const mode = searchParams.get('mode');
+  const isDraft = searchParams.get('draft');
+  const isViewMode = !mode || mode === 'view';
+  const gatewayCustomerId = searchParams.get('gatewayCustomerId');
+  const customerData = isDraft ? myTasks : customers;
+  const navigate = useNavigate();
+
+  const currentCustomer = customerData.find(
+    (customer: any) => customer.gatewayCustomerId === gatewayCustomerId
+  );
+
+  // testing view mode with real time data
+  const initialCustomerData: ICustomerData = {
+    gatewayCustomerId: gatewayCustomerId || '',
+    name: '',
+    cisNumbers: [],
+    enabled: false,
+    customerSettings: {
+      transactionLimit: 0,
+      cumulativeTransactionLimit: 0,
+      processingWindow: '00:00-23:59',
+      processingWindowTimezone: 'CST',
+    },
+    customerType: 'COMMERCIAL',
+    virtualAcctCustomer: false,
+    demoCustomer: false,
+    customerAccounts: [],
+    customerProducts: [],
+    billingCustomerId: '',
+    createdBy: '',
+    customerContacts: [],
+  };
+
+  const apiCustomerData: ICustomerData = {
+    gatewayCustomerId: 'e659aa04-65fc-42f4-8133-32b9cf9040e8',
+    name: 'Test',
+    cisNumbers: ['100100100155'],
+    enabled: true,
+    customerSettings: {
+      transactionLimit: 1000000,
+      cumulativeTransactionLimit: 5000000,
+      processingWindow: '00:00-23:59',
+      processingWindowTimezone: 'CST',
+    },
+    customerType: 'COMMERCIAL',
+    virtualAcctCustomer: false,
+    demoCustomer: true,
+    customerAccounts: [
+      {
+        number: '1000100010055',
+        name: 'CBNK00001_00008',
+        routingNumber: '072000096',
+        bankCode: '10002',
+        cisNumbers: ['100100100155'],
+        accountSettings: {
+          transactionLimit: 100,
+          cumulativeTransactionLimit: 10000,
+        },
+        billingAccount: true,
+        enabled: true,
+        products: [
+          {
+            id: null,
+            name: 'INSTANT_PAYMENTS_API',
+            friendlyName: null,
+            shortName: null,
+            description: null,
+            productSettings: null,
+            enabled: true,
+            billable: true,
+            resources: [
+              {
+                name: 'CREATE_CREDIT_TRANSFER',
+                friendlyName: null,
+                description: null,
+                enabled: true,
+                billable: true,
+              },
+              {
+                name: 'RETRIEVE_CREDIT_TRANSFER',
+                friendlyName: null,
+                description: null,
+                enabled: true,
+                billable: true,
+              },
+            ],
+            paymentRails: [
+              {
+                name: 'RTP',
+                friendlyName: null,
+                description: null,
+                paymentRailSettings: {
+                  transactionLimit: 100,
+                  cumulativeTransactionLimit: 10000,
+                  duplicateCheckDuration: 0,
+                  allowedCreditAccountList: [
+                    {
+                      accountNumber:
+                        '{"accountNumber": "123456789", "routingNumber": "123456789"}',
+                      routingNumber: null,
+                    },
+                  ],
+                },
+                enabled: true,
+                billable: true,
+              },
+            ],
+          },
+        ],
+      },
+    ],
+    customerProducts: [
+      {
+        id: null,
+        name: 'ACCOUNT_BALANCE_API',
+        friendlyName: null,
+        shortName: null,
+        description: null,
+        productSettings: null,
+        enabled: true,
+        billable: true,
+        resources: [
+          {
+            name: 'RETRIEVE_ACCOUNT_BALANCE',
+            friendlyName: null,
+            description: null,
+            enabled: true,
+            billable: true,
+          },
+        ],
+        paymentRails: null,
+      },
+      {
+        id: null,
+        name: 'INSTANT_PAYMENTS_API',
+        friendlyName: null,
+        shortName: null,
+        description: null,
+        productSettings: null,
+        enabled: true,
+        billable: true,
+        resources: [
+          {
+            name: 'CREATE_CREDIT_TRANSFER',
+            friendlyName: null,
+            description: null,
+            enabled: true,
+            billable: true,
+          },
+          {
+            name: 'RETRIEVE_CREDIT_TRANSFER',
+            friendlyName: null,
+            description: null,
+            enabled: true,
+            billable: true,
+          },
+        ],
+        paymentRails: [
+          {
+            name: 'RTP',
+            friendlyName: null,
+            description: null,
+            paymentRailSettings: {
+              transactionLimit: 500000,
+              cumulativeTransactionLimit: 2000000,
+              duplicateCheckDuration: 0,
+            },
+            enabled: true,
+            billable: true,
+          },
+          {
+            name: 'FEDNOW',
+            friendlyName: null,
+            description: null,
+            paymentRailSettings: {
+              transactionLimit: 500000,
+              cumulativeTransactionLimit: 2000000,
+              duplicateCheckDuration: 0,
+            },
+            enabled: true,
+            billable: true,
+          },
+        ],
+      },
+    ],
+    billingCustomerId: 'SHB1001005',
+    createdBy: 'IPA',
+    customerContacts: [
+      {
+        contactName: 'James',
+        contactTitle: 'QA Engineer',
+        contactPhone: '129-000-0002',
+        contactPhoneType: 'MOBILE',
+        contactEmail: 'james.murphy@comerica.com',
+        contactPreferredType: 'Email',
+        contactType: 'SECONDARY',
+        enabled: false,
+      },
+      {
+        contactName: 'Ben Reynold',
+        contactTitle: 'Developer',
+        contactPhone: '5309999999 ext 2345',
+        contactPhoneType: 'WORK',
+        contactEmail: 'ben.reynold@comerica.com',
+        contactPreferredType: 'Phone',
+        contactType: 'TERTIARY',
+        enabled: false,
+      },
+    ],
+  };
+  const [customer, setCustomer] = useState(initialCustomerData);
   useEffect(() => {
-    if (!account?.products) return;
-
-    let general = false;
-    let rtp = false;
-    let fednow = false;
-    let wires = false;
-
-    account.products.forEach((product: any) => {
-      // GENERAL
-      if (product.name === 'ACCOUNT_BALANCE_API') {
-        const retrieve = product.resources?.some(
-          (r: any) => r.name === 'RETRIEVE_ACCOUNT_BALANCE' && r.enabled
-        );
-        if (retrieve) general = true;
-      }
-
-      // RTP / FEDNOW / WIRES (INSTANT_PAYMENTS_API)
-      if (product.name === 'INSTANT_PAYMENTS_API') {
-        const createTransfer = product.resources?.some(
-          (r: any) => r.name === 'CREATE_CREDIT_TRANSFER' && r.enabled
-        );
-
-        if (createTransfer && product.paymentRails?.length) {
-          product.paymentRails.forEach((rail: any) => {
-            if (rail.enabled) {
-              if (rail.name === 'RTP') rtp = true;
-              if (rail.name === 'FEDNOW') fednow = true;
-              if (rail.name === 'WIRES') wires = true;
-            }
-          });
-        }
-      }
-    });
-
-    // ✅ Apply checkboxes based on computed flags
-    setApiGeneralValues(general ? api_general_options.map((o) => o.id) : []);
-    setApiRTPValues(rtp ? api_rtp_options.map((o) => o.id) : []);
-    setApiFedNowValues(fednow ? api_fednow_options.map((o) => o.id) : []);
-    setApiWiresValues(wires ? api_wire_options.map((o) => o.id) : []);
-  }, [account]);
-
-  // ✅ Keep "Select All" synced
-  useEffect(() => {
-    const allSelected =
-      apiGeneralValues.length === api_general_options.length &&
-      apiRTPValues.length === api_rtp_options.length &&
-      apiFedNowValues.length === api_fednow_options.length &&
-      apiWiresValues.length === api_wire_options.length;
-    setIsAllSelected(allSelected);
-  }, [
-    apiGeneralValues,
-    apiRTPValues,
-    apiFedNowValues,
-    apiWiresValues,
-    api_general_options.length,
-    api_rtp_options.length,
-    api_fednow_options.length,
-    api_wire_options.length,
-  ]);
-
-  const handleSelectAllChange = (checked: boolean) => {
-    if (checked) {
-      setApiGeneralValues(api_general_options.map((c) => c.id));
-      setApiRTPValues(api_rtp_options.map((c) => c.id));
-      setApiFedNowValues(api_fednow_options.map((c) => c.id));
-      setApiWiresValues(api_wire_options.map((c) => c.id));
-    } else {
-      setApiGeneralValues([]);
-      setApiRTPValues([]);
-      setApiFedNowValues([]);
-      setApiWiresValues([]);
+    console.log("hi")
+    if (
+      !mode ||
+      !role ||
+      (role === 'viewer' && mode != 'view') ||
+      (role === 'editor' && mode === 'create')
+    ) {
+      navigate('/');
+    } 
+    if (role === 'viewer' || role === 'editor') {
+      console.log("ran 1")
+      setCustomer(apiCustomerData);
     }
-    setIsAllSelected(checked);
-  };
-
-  const sx = {
-    width: '250px',
-    height: '40px',
-    margin: '10px',
-  };
+    else{
+      console.log("ran2")
+      setCustomer(initialCustomerData)
+    }
+  }, []);
 
   return (
-    <>
-      <Box className="section">
-        <Typography
-          variant="body1"
-          className="main-header"
-          fontStyle="italic"
-          sx={{
-            fontSize: '21px',
-            fontStyle: 'italic',
-          }}
-        >
-          Account Info
-        </Typography>
-        <Box sx={{ padding: '10px' }}>
-          <Box
-            sx={{
-              display: 'flex',
-            }}
-          >
-            <Input
-              className="main-input"
-              titleLabel="Account Name"
-              value={account?.name}
-              disabled={disabled}
-              placeholder="Account Name"
-              sx={sx}
-            />
-            <Input
-              className="main-input"
-              titleLabel="Account Number"
-              placeholder="Account Number"
-              value={account?.number}
-              disabled={disabled}
-              sx={sx}
-            />
-            <Select
-              className="main-input"
-              title="Bank Code"
-              value={account?.bankCode}
-              disabled={disabled}
-              sx={sx}
-              options={[{ key: '10002', value: '10002', text: '10002' }]}
-            />
-          </Box>
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-            }}
-          >
-            <Input
-              className="main-input"
-              titleLabel="Routing Number"
-              placeholder="Routing Number"
-              value={account?.routingNumber}
-              disabled={disabled}
-              sx={sx}
-            />
-            <div style={{ marginLeft: '10px' }}></div>
-            <Checkbox
-              disabled={disabled}
-              checked={account?.billingAccount}
-              sx={sx}
-              label="Billing Account"
-            />
-          </Box>
-        </Box>
-      </Box>
-
-      <Box className="section">
-        <Typography
-          variant="body1"
-          className="main-header"
-          fontStyle="italic"
-          sx={{
-            fontSize: '21px',
-            fontStyle: 'italic',
-          }}
-        >
-          Limits
-        </Typography>
-        <Box sx={{ padding: '10px' }}>
-          <Box
-            sx={{
-              display: 'flex',
-            }}
-          >
-            <Input
-              className="main-input"
-              titleLabel="Transaction Limit"
-              placeholder="Transaction Limit"
-              value={account?.accountSettings?.cumulativeTransactionLimit}
-              disabled={disabled}
-              sx={sx}
-            />
-            <Input
-              className="main-input"
-              titleLabel="Daily Limit"
-              placeholder="Daily Limit"
-              value={account?.accountSettings?.transactionLimit}
-              disabled={disabled}
-              isOptionalLabel={true}
-              sx={sx}
-            />
-          </Box>
-        </Box>
-      </Box>
-
-      {/* ✅ API Section */}
-      <Box className="section">
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: '30px' }}>
-          <Typography
-            variant="body1"
-            className="main-header"
-            fontStyle="italic"
-            sx={{
-              fontSize: '21px',
-              fontStyle: 'italic',
-            }}
-          >
-            Api
-          </Typography>
-          <Checkbox
-            label="Select all"
-            checked={isAllSelected}
-            onChange={(e: any) => handleSelectAllChange(e.target.checked)}
-            disabled={disabled}
-          />
-        </Box>
-        <Box
-          className="checkbox-container sub-section"
-          sx={{
-            display: 'flex',
-            flexDirection: 'row',
-            gap: '10px',
-            padding: '10px',
-            alignItems: 'center',
-            flexWrap: 'wrap',
-          }}
-        >
-          <CardCheckbox
-            title="General"
-            checkboxes={api_general_options}
-            selectedValues={apiGeneralValues}
-            onChange={setApiGeneralValues}
-            disabled={disabled}
-          />
-          <CardCheckbox
-            title="US RTP"
-            checkboxes={api_rtp_options}
-            selectedValues={apiRTPValues}
-            onChange={setApiRTPValues}
-            disabled={disabled}
-          />
-          <CardCheckbox
-            title="FedNow"
-            checkboxes={api_fednow_options}
-            selectedValues={apiFedNowValues}
-            onChange={setApiFedNowValues}
-            disabled={disabled}
-          />
-          <CardCheckbox
-            title="Wire"
-            checkboxes={api_wire_options}
-            selectedValues={apiWiresValues}
-            onChange={setApiWiresValues}
-            disabled={disabled}
-          />
-        </Box>
-      </Box>
-
-      {!disabled && (
-        <Box
-          sx={{
-            display: 'flex',
-            justifyContent: 'center',
-            gap: '10px',
-            marginTop: '10px',
-          }}
-        >
-          <Button
-            sx={{
-              border: '1px solid black',
-              background: '#F5F5F5',
-              padding: '10px',
-              fontSize: '12px',
-              color: 'black',
-              width: '150px',
-              borderRadius: '5px',
-            }}
-          >
-            Save
-          </Button>
-          <Button
-            sx={{
-              border: '1px solid black',
-              background: '#F5F5F5',
-              padding: '10px',
-              fontSize: '12px',
-              color: 'black',
-              width: '150px',
-              borderRadius: '5px',
-            }}
-          >
-            Cancel
-          </Button>
-        </Box>
+    <Box className="main-profile">
+      <CustomerInfo
+        customer={customer}
+        setCustomer={setCustomer}
+        disabled={isViewMode}
+        mode={mode}
+        gatewayCustomerId={gatewayCustomerId}
+      />
+      <BusinessContact
+        customer={customer}
+        setCustomer={setCustomer}
+        disabled={isViewMode}
+      />
+      <TechnicalContact
+        customer={customer}
+        setCustomer={setCustomer}
+        disabled={isViewMode}
+      />
+      <TransactionLimit
+        customer={customer}
+        setCustomer={setCustomer}
+        disabled={isViewMode}
+      />
+      <ApiCustomerConfig
+        customer={customer}
+        setCustomer={setCustomer}
+        disabled={isViewMode}
+      />
+      <AccountPreference
+        customer={customer}
+        setCustomer={setCustomer}
+        disabled={isViewMode}
+      />
+      {!isViewMode && (
+        <ActionButton
+          customer={customer}
+          setCustomer={setCustomer}
+          disabled={isViewMode}
+          gatewayCustomerId={gatewayCustomerId}
+        />
       )}
-    </>
+    </Box>
   );
 };
-
-export default AccountPopup;
