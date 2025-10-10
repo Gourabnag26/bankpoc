@@ -1,85 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { Box } from '@ucl/ui-components';
-import { useLocation } from 'react-router-dom';
-import CustomerInfo from './components/customer-info/customer-info';
-import BusinessContact from './components/business-contact/business-contact';
-import TechnicalContact from './components/technical-contact/technical-contact';
-import TransactionLimit from './components/transaction-limit/transaction-limit';
-import ApiCustomerConfig from './components/api-customer/api-customer';
-import AccountPreference from './components/account-preference/account-preference';
-import ActionButton from './components/action-button/action-button';
-import { useCustomer } from 'src/context/customer-context';
 import { useNavigate } from 'react-router-dom';
 
-export interface ICustomerData {
-  gatewayCustomerId: string;
-  name: string;
-  cisNumbers: string[];
-  enabled: boolean;
-  customerSettings: ICustomerSettings;
-  customerType: string;
-  virtualAcctCustomer: boolean;
-  demoCustomer: boolean;
-  customerAccounts: ICustomerAccount[];
-  customerProducts: ICustomerProduct[];
-  billingCustomerId: string;
-  createdBy: string;
-  customerContacts: ICustomerContact[];
-}
-
-export interface ICustomerSettings {
-  transactionLimit: number;
-  cumulativeTransactionLimit: number;
-  processingWindow: string;
-  processingWindowTimezone: string;
-}
-
-export interface ICustomerAccount {
-  number: string;
-  name: string;
-  routingNumber: string;
-  bankCode: string;
-  cisNumbers: string[];
-  accountSettings: IAccountSettings;
-  billingAccount: boolean;
-  enabled: boolean;
-  products: ICustomerProduct[];
-}
-
-export interface IAccountSettings {
-  transactionLimit: number;
-  cumulativeTransactionLimit: number;
-}
-
-export interface ICustomerProduct {
-  id: string | null;
-  name: string;
-  friendlyName: string | null;
-  shortName: string | null;
-  description: string | null;
-  productSettings: IProductSettings | null;
-  enabled: boolean;
-  billable: boolean;
-  resources: IProductResource[];
-  paymentRails: IPaymentRail[] | null;
-}
-
-export interface IProductSettings {
-  transactionLimit?: number;
-  cumulativeTransactionLimit?: number;
-  duplicateCheckDuration?: number;
-}
-
-export interface IProductResource {
-  name: string;
-  friendlyName: string | null;
-  description: string | null;
-  enabled: boolean;
-  billable: boolean;
-}
-
-export interface IPaymentRail {
-  name: string;
   friendlyName: string | null;
   description: string | null;
   paymentRailSettings: IPaymentRailSettings;
@@ -399,3 +319,15 @@ export const CustomerProfile = () => {
     </Box>
   );
 };
+
+
+
+
+{
+  "/api": {
+    "target": "https://api2.jpa.dev1.n53comerica.net",
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "debug"
+  }
+}
