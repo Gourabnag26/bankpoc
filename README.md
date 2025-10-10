@@ -171,7 +171,14 @@ export const CustomerSearch = () => {
           </Button>
         </div>
       </div>
-      <CustomerSearchTable currentRole={role} data={tableData} />
+      <CustomerSearchTable currentRole={role} data={tableData} /
+      >
     </Container>
   );
 };
+
+my url is 'https://api2.ipa.dev1.r53comerica.net/api/customer/v1/customer/'
+my headers are
+"X-API-KEY" : 'oJVEO51mZT9b6S4eyazHZ4HoEg7UiRPm390LyNUh',
+'gatewayCustomerId' = "96689312-7417-47dc-b207-831a88a31620";
+'traceId' ="cadc981b-18fe-4b46-994c-43f839f6912b";
