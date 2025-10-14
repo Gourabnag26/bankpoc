@@ -1,179 +1,359 @@
 import React, { useEffect, useState } from 'react';
-import { Box } from '@ucl/ui-components';
-import { useLocation, useNavigate } from 'react-router-dom';
-import CustomerInfo from './components/customer-info/customer-info';
-import BusinessContact from './components/business-contact/business-contact';
-import TechnicalContact from './components/technical-contact/technical-contact';
-import TransactionLimit from './components/transaction-limit/transaction-limit';
-import ApiCustomerConfig from './components/api-customer/api-customer';
-import AccountPreference from './components/account-preference/account-preference';
-import ActionButton from './components/action-button/action-button';
-import { useCustomer } from '../../context/customer-context';
-import ApproverView from './approver-view/approver-view';
-import { CustomerService } from 'shared';
-const { v4: uuidv4 } = require('uuid');
+import { IcustomerProps } from '../../customer-profile';
+import { Box, Checkbox, Typography } from '@ucl/ui-components';
+import CardCheckbox from '../../../../components/checkbox-menu/checkbox-menu';
+import '../../customer-profile.css';
 
-export interface ICustomerData {
-  gatewayCustomerId: string;
-  name: string;
-  cisNumbers: string[];
-  enabled: boolean;
-  customerSettings: ICustomerSettings;
-  customerType: string;
-  virtualAcctCustomer: boolean;
-  demoCustomer: boolean;
-  customerAccounts: ICustomerAccount[];
-  customerProducts: ICustomerProduct[];
-  billingCustomerId: string;
-  createdBy: string;
-  customerContacts: ICustomerContact[];
-}
+const ApiCustomerConfig = ({
+  disabled,
+  customer,
+  setCustomer,
+}: IcustomerProps) => {
+  const api_general_options = [
+    { id: 'acc_balance', label: 'Account Balance', value: 'Account Balance' },
+  ];
 
-// Other interfaces (ICustomerSettings, etc.) remain unchanged
+  const api_rtp_options = [
+    {
+      id: 'ipa_create_credit',
+      label: 'Create Credit & Retrieve Status',
+      value: 'Instant Payments - Create Credit',
+    },
+  ];
 
-export const CustomerProfile = () => {
-  const { myTasks, customers } = useCustomer();
-  const location = useLocation();
-  const navigate = useNavigate();
+  const api_fednow_options = [
+    {
+      id: 'fednow_createcredit',
+      label: 'Create Credit & Retrieve Status',
+      value: 'FedNow - Create Credit',
+    },
+  ];
 
-  const searchParams = new URLSearchParams(location.search);
-  const mode = searchParams.get('mode');
-  const role = searchParams.get('role');
-  const isDraft = searchParams.get('draft');
-  const gatewayCustomerId = searchParams.get('gatewayCustomerId');
+  const api_wire_options = [
+    {
+      id: 'wire_create_credit',
+      label: 'Create Credit  & Retrieve Status',
+      value: 'Wire - Create Credit',
+    },
+    {
+      id: 'wire_webhook',
+      label: 'Webhook Status Update',
+      value: 'Wire - Webhook Retrieve',
+    },
+  ];
 
-  const isViewMode = !mode || mode === 'view';
+  const [apiGeneralValues, setApiGeneralValues] = useState<string[]>([]);
+  const [apiRTPValues, setApiRTPValues] = useState<string[]>([]);
+  const [apiFedNowValues, setApiFedNowValues] = useState<string[]>([]);
+  const [apiWiresValues, setApiWiresValues] = useState<string[]>([]);
+  const [isAllSelected, setIsAllSelected] = useState<boolean>(false);
 
-  const customerData = isDraft ? myTasks : customers;
+  useEffect(() => {
+    if (!customer?.customerProducts) return;
 
-  const initialCustomerData: ICustomerData = {
-    gatewayCustomerId: gatewayCustomerId || '',
-    name: '',
-    cisNumbers: [],
-    enabled: false,
+    let general = false;
+    let rtp = false;
+    let fednow = false;
+    let wires = false;
+
+    customer?.customerProducts?.forEach((product: any) => {
+      // GENERAL (ACCOUNT_BALANCE_API)
+      if (product.name === 'ACCOUNT_BALANCE_API') {
+        const retrieve = product.resources?.some(
+          (r: any) => r.name === 'RETRIEVE_ACCOUNT_BALANCE' && r.enabled
+        );
+        if (retrieve) general = true;
+      }
+
+      // RTP / FEDNOW / WIRES (INSTANT_PAYMENTS_API)
+      if (product.name === 'INSTANT_PAYMENTS_API') {
+        const createTransfer = product.resources?.some(
+          (r: any) => r.name === 'CREATE_CREDIT_TRANSFER' && r.enabled
+        );
+
+        if (createTransfer && product.paymentRails?.length) {
+          product.paymentRails.forEach((rail: any) => {
+            if (rail.enabled) {
+              if (rail.name === 'RTP') rtp = true;
+              if (rail.name === 'FEDNOW') fednow = true;
+              if (rail.name === 'WIRES') wires = true;
+            }
+          });
+        }
+      }
+    });
+
+    setApiGeneralValues(general ? api_general_options.map((o) => o.id) : []);
+    setApiRTPValues(rtp ? api_rtp_options.map((o) => o.id) : []);
+    setApiFedNowValues(fednow ? api_fednow_options.map((o) => o.id) : []);
+    setApiWiresValues(wires ? api_wire_options.map((o) => o.id) : []);
+  }, [customer]);
+
+  useEffect(() => {
+    const allSelected =
+      apiGeneralValues.length === api_general_options.length &&
+      apiRTPValues.length === api_rtp_options.length &&
+      apiFedNowValues.length === api_fednow_options.length &&
+      apiWiresValues.length === api_wire_options.length;
+
+    setIsAllSelected(allSelected);
+  }, [
+    apiGeneralValues,
+    apiRTPValues,
+    apiFedNowValues,
+    apiWiresValues,
+    api_general_options.length,
+    api_rtp_options.length,
+    api_fednow_options.length,
+    api_wire_options.length,
+  ]);
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setApiGeneralValues(api_general_options.map((c) => c.id));
+      setApiRTPValues(api_rtp_options.map((c) => c.id));
+      setApiFedNowValues(api_fednow_options.map((c) => c.id));
+      setApiWiresValues(api_wire_options.map((c) => c.id));
+    } else {
+      setApiGeneralValues([]);
+      setApiRTPValues([]);
+      setApiFedNowValues([]);
+      setApiWiresValues([]);
+    }
+    setIsAllSelected(checked);
+  };
+
+  const handleChange =
+    (setter: React.Dispatch<React.SetStateAction<string[]>>) =>
+    (values: string[]) => {
+      setter(values);
+    };
+
+  return (
+    <Box className="section">
+      <Box className="group-head">
+        <Typography variant="h3" className="main-header" fontStyle="italic">
+          Api
+        </Typography>
+        <Checkbox
+          label="Select all"
+          disabled={disabled}
+          checked={isAllSelected}
+          onChange={(e: any) => handleSelectAll(e.target.checked)}
+        />
+      </Box>
+
+      <Box className="checkbox-container sub-section">
+        <CardCheckbox
+          title="General"
+          checkboxes={api_general_options}
+          disabled={disabled}
+          selectedValues={apiGeneralValues}
+          onChange={handleChange(setApiGeneralValues)}
+        />
+        <CardCheckbox
+          title="US RTP"
+          checkboxes={api_rtp_options}
+          disabled={disabled}
+          selectedValues={apiRTPValues}
+          onChange={handleChange(setApiRTPValues)}
+        />
+        <CardCheckbox
+          title="FedNow"
+          disabled={disabled}
+          checkboxes={api_fednow_options}
+          selectedValues={apiFedNowValues}
+          onChange={handleChange(setApiFedNowValues)}
+        />
+        <CardCheckbox
+          title="Wire"
+          disabled={disabled}
+          checkboxes={api_wire_options}
+          selectedValues={apiWiresValues}
+          onChange={handleChange(setApiWiresValues)}
+        />
+      </Box>
+    </Box>
+  );
+};
+
+export default ApiCustomerConfig;
+
+
+ const apiCustomerData: ICustomerData = {
+    gatewayCustomerId: 'e659aa04-65fc-42f4-8133-32b9cf9040e8',
+    name: 'Test',
+    cisNumbers: ['100100100155'],
+    enabled: true,
     customerSettings: {
-      transactionLimit: 0,
-      cumulativeTransactionLimit: 0,
+      transactionLimit: 1000000,
+      cumulativeTransactionLimit: 5000000,
       processingWindow: '00:00-23:59',
       processingWindowTimezone: 'CST',
     },
     customerType: 'COMMERCIAL',
     virtualAcctCustomer: false,
-    demoCustomer: false,
-    customerAccounts: [],
-    customerProducts: [],
-    billingCustomerId: '',
-    createdBy: '',
-    customerContacts: [],
+    demoCustomer: true,
+    customerAccounts: [
+      {
+        number: '1000100010055',
+        name: 'CBNK00001_00008',
+        routingNumber: '072000096',
+        bankCode: '10002',
+        cisNumbers: ['100100100155'],
+        accountSettings: {
+          transactionLimit: 100,
+          cumulativeTransactionLimit: 10000,
+        },
+        billingAccount: true,
+        enabled: true,
+        products: [
+          {
+            id: null,
+            name: 'INSTANT_PAYMENTS_API',
+            friendlyName: null,
+            shortName: null,
+            description: null,
+            productSettings: null,
+            enabled: true,
+            billable: true,
+            resources: [
+              {
+                name: 'CREATE_CREDIT_TRANSFER',
+                friendlyName: null,
+                description: null,
+                enabled: true,
+                billable: true,
+              },
+              {
+                name: 'RETRIEVE_CREDIT_TRANSFER',
+                friendlyName: null,
+                description: null,
+                enabled: true,
+                billable: true,
+              },
+            ],
+            paymentRails: [
+              {
+                name: 'RTP',
+                friendlyName: null,
+                description: null,
+                paymentRailSettings: {
+                  transactionLimit: 100,
+                  cumulativeTransactionLimit: 10000,
+                  duplicateCheckDuration: 0,
+                  allowedCreditAccountList: [
+                    {
+                      accountNumber:
+                        '{"accountNumber": "123456789", "routingNumber": "123456789"}',
+                      routingNumber: null,
+                    },
+                  ],
+                },
+                enabled: true,
+                billable: true,
+              },
+            ],
+          },
+        ],
+      },
+    ],
+    customerProducts: [
+      {
+        id: null,
+        name: 'ACCOUNT_BALANCE_API',
+        friendlyName: null,
+        shortName: null,
+        description: null,
+        productSettings: null,
+        enabled: true,
+        billable: true,
+        resources: [
+          {
+            name: 'RETRIEVE_ACCOUNT_BALANCE',
+            friendlyName: null,
+            description: null,
+            enabled: true,
+            billable: true,
+          },
+        ],
+        paymentRails: null,
+      },
+      {
+        id: null,
+        name: 'INSTANT_PAYMENTS_API',
+        friendlyName: null,
+        shortName: null,
+        description: null,
+        productSettings: null,
+        enabled: true,
+        billable: true,
+        resources: [
+          {
+            name: 'CREATE_CREDIT_TRANSFER',
+            friendlyName: null,
+            description: null,
+            enabled: true,
+            billable: true,
+          },
+          {
+            name: 'RETRIEVE_CREDIT_TRANSFER',
+            friendlyName: null,
+            description: null,
+            enabled: true,
+            billable: true,
+          },
+        ],
+        paymentRails: [
+          {
+            name: 'RTP',
+            friendlyName: null,
+            description: null,
+            paymentRailSettings: {
+              transactionLimit: 500000,
+              cumulativeTransactionLimit: 2000000,
+              duplicateCheckDuration: 0,
+            },
+            enabled: true,
+            billable: true,
+          },
+          {
+            name: 'FEDNOW',
+            friendlyName: null,
+            description: null,
+            paymentRailSettings: {
+              transactionLimit: 500000,
+              cumulativeTransactionLimit: 2000000,
+              duplicateCheckDuration: 0,
+            },
+            enabled: true,
+            billable: true,
+          },
+        ],
+      },
+    ],
+    billingCustomerId: 'SHB1001005',
+    createdBy: 'IPA',
+    customerContacts: [
+      {
+        contactName: 'James',
+        contactTitle: 'QA Engineer',
+        contactPhone: '129-000-0002',
+        contactPhoneType: 'MOBILE',
+        contactEmail: 'james.murphy@comerica.com',
+        contactPreferredType: 'Email',
+        contactType: 'SECONDARY',
+        enabled: false,
+      },
+      {
+        contactName: 'Ben Reynold',
+        contactTitle: 'Developer',
+        contactPhone: '5309999999 ext 2345',
+        contactPhoneType: 'WORK',
+        contactEmail: 'ben.reynold@comerica.com',
+        contactPreferredType: 'Phone',
+        contactType: 'TERTIARY',
+        enabled: false,
+      },
+    ],
   };
-
-  const [customer, setCustomer] = useState<ICustomerData>(initialCustomerData);
-  const [loading, setLoading] = useState<boolean>(true); // 🔄 Loading state
-
-  // Redirect to home if invalid query params
-  useEffect(() => {
-    if (
-      !mode ||
-      !role ||
-      (role === 'viewer' && mode !== 'view') ||
-      (role === 'editor' && mode === 'create')
-    ) {
-      navigate('/');
-    }
-  }, [mode, role, navigate]);
-
-  // Fetch customer data
-  useEffect(() => {
-    const fetchCustomer = async () => {
-      try {
-        if ((role === 'viewer' || role === 'editor') && gatewayCustomerId) {
-          const customerServiceApi = new CustomerService();
-          const traceId = uuidv4();
-
-          customerServiceApi.addGetCustomerHeader(gatewayCustomerId, traceId);
-          const response = await customerServiceApi.getCustomer();
-
-          if (!response?.data) {
-            navigate('/');
-            return;
-          }
-
-          setCustomer(response.data as ICustomerData);
-        } else if (mode === 'edit' && gatewayCustomerId) {
-          const existingCustomer = customerData.find(
-            (c: any) => c.gatewayCustomerId === gatewayCustomerId
-          );
-          if (existingCustomer) {
-            setCustomer(existingCustomer as ICustomerData);
-          } else {
-            navigate('/');
-            return;
-          }
-        }
-      } catch (error) {
-        console.error('Failed to fetch customer data:', error);
-        navigate('/');
-      } finally {
-        setLoading(false); // ✅ Stop loading regardless of outcome
-      }
-    };
-
-    fetchCustomer();
-  }, [role, gatewayCustomerId, mode, customerData, navigate]);
-
-  // Show loading UI while fetching
-  if (loading) {
-    return <div style={{ padding: '2rem' }}>Loading...</div>; // 🔄 Customize as needed
-  }
-
-  // Approver view
-  if (role === 'approver' && mode === 'edit') {
-    return <ApproverView />;
-  }
-
-  // Main profile form
-  return (
-    <Box className="main-profile">
-      <CustomerInfo
-        customer={customer}
-        setCustomer={setCustomer}
-        disabled={isViewMode}
-        mode={mode}
-        gatewayCustomerId={gatewayCustomerId}
-      />
-      <BusinessContact
-        customer={customer}
-        setCustomer={setCustomer}
-        disabled={isViewMode}
-      />
-      <TechnicalContact
-        customer={customer}
-        setCustomer={setCustomer}
-        disabled={isViewMode}
-      />
-      <TransactionLimit
-        customer={customer}
-        setCustomer={setCustomer}
-        disabled={isViewMode}
-      />
-      <ApiCustomerConfig
-        customer={customer}
-        setCustomer={setCustomer}
-        disabled={isViewMode}
-      />
-      <AccountPreference
-        customer={customer}
-        setCustomer={setCustomer}
-        disabled={isViewMode}
-      />
-      {!isViewMode && (
-        <ActionButton
-          customer={customer}
-          setCustomer={setCustomer}
-          disabled={isViewMode}
-          gatewayCustomerId={gatewayCustomerId}
-        />
-      )}
-    </Box>
-  );
-};
