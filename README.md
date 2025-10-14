@@ -13,7 +13,112 @@ import ApproverView from './approver-view/approver-view';
 import { CustomerService } from 'shared';
 const { v4: uuidv4 } = require('uuid');
 
-// Interfaces omitted for brevity but should remain the same.
+export interface ICustomerData {
+  gatewayCustomerId: string;
+  name: string;
+  cisNumbers: string[];
+  enabled: boolean;
+  customerSettings: ICustomerSettings;
+  customerType: string;
+  virtualAcctCustomer: boolean;
+  demoCustomer: boolean;
+  customerAccounts: ICustomerAccount[];
+  customerProducts: ICustomerProduct[];
+  billingCustomerId: string;
+  createdBy: string;
+  customerContacts: ICustomerContact[];
+}
+
+export interface ICustomerSettings {
+  transactionLimit: number;
+  cumulativeTransactionLimit: number;
+  processingWindow: string;
+  processingWindowTimezone: string;
+}
+
+export interface ICustomerAccount {
+  number: string;
+  name: string;
+  routingNumber: string;
+  bankCode: string;
+  cisNumbers: string[];
+  accountSettings: IAccountSettings;
+  billingAccount: boolean;
+  enabled: boolean;
+  products: ICustomerProduct[];
+}
+
+export interface IAccountSettings {
+  transactionLimit: number;
+  cumulativeTransactionLimit: number;
+}
+
+export interface ICustomerProduct {
+  id: string | null;
+  name: string;
+  friendlyName: string | null;
+  shortName: string | null;
+  description: string | null;
+  productSettings: IProductSettings | null;
+  enabled: boolean;
+  billable: boolean;
+  resources: IProductResource[];
+  paymentRails: IPaymentRail[] | null;
+}
+
+export interface IProductSettings {
+  transactionLimit?: number;
+  cumulativeTransactionLimit?: number;
+  duplicateCheckDuration?: number;
+}
+
+export interface IProductResource {
+  name: string;
+  friendlyName: string | null;
+  description: string | null;
+  enabled: boolean;
+  billable: boolean;
+}
+
+export interface IPaymentRail {
+  name: string;
+  friendlyName: string | null;
+  description: string | null;
+  paymentRailSettings: IPaymentRailSettings;
+  enabled: boolean;
+  billable: boolean;
+}
+
+export interface IPaymentRailSettings {
+  transactionLimit: number;
+  cumulativeTransactionLimit: number;
+  duplicateCheckDuration: number;
+  allowedCreditAccountList?: IAllowedCreditAccount[];
+}
+
+export interface IAllowedCreditAccount {
+  accountNumber: string;
+  routingNumber: string | null;
+}
+
+export interface ICustomerContact {
+  contactName: string;
+  contactTitle: string;
+  contactPhone: string;
+  contactPhoneType: string;
+  contactEmail: string;
+  contactPreferredType: string;
+  contactType: string;
+  enabled: boolean;
+}
+
+export interface IcustomerProps {
+  customer: ICustomerData;
+  setCustomer: React.Dispatch<React.SetStateAction<ICustomerData>>;
+  disabled: boolean;
+  gatewayCustomerId?: any;
+  mode?: any;
+}
 
 export const CustomerProfile = () => {
   const { myTasks, customers } = useCustomer();
@@ -67,7 +172,6 @@ export const CustomerProfile = () => {
     }
   }, [mode, role, navigate]);
 
-  // Fetch customer data from API (for viewer/editor roles)
   useEffect(() => {
     const fetchCustomer = async () => {
       try {
@@ -83,7 +187,7 @@ export const CustomerProfile = () => {
           return;
         }
 
-        setCustomer(response.data); // ✅ Set customer from API
+        setCustomer(response?.data as any); 
       } catch (error) {
         console.error('Failed to fetch customer data:', error);
         navigate('/');
@@ -97,14 +201,14 @@ export const CustomerProfile = () => {
         (c: any) => c.gatewayCustomerId === gatewayCustomerId
       );
       if (existingCustomer) {
-        setCustomer(existingCustomer);
+        setCustomer(existingCustomer as any);
       } else {
         navigate('/');
       }
     }
   }, [role, gatewayCustomerId, mode, customerData, navigate]);
 
-  // Approver view override
+  // Approver view 
   if (role === 'approver' && mode === 'edit') {
     return <ApproverView />;
   }
