@@ -48,6 +48,7 @@ const ApiCustomerConfig = ({
   const [apiWiresValues, setApiWiresValues] = useState<string[]>([]);
   const [isAllSelected, setIsAllSelected] = useState<boolean>(false);
 
+  // INITIALIZE UI FROM CUSTOMER DATA
   useEffect(() => {
     if (!customer?.customerProducts) return;
 
@@ -56,23 +57,20 @@ const ApiCustomerConfig = ({
     let fednow = false;
     let wires = false;
 
-    customer?.customerProducts?.forEach((product: any) => {
-      // GENERAL (ACCOUNT_BALANCE_API)
+    customer.customerProducts.forEach((product) => {
       if (product.name === 'ACCOUNT_BALANCE_API') {
         const retrieve = product.resources?.some(
-          (r: any) => r.name === 'RETRIEVE_ACCOUNT_BALANCE' && r.enabled
+          (r) => r.name === 'RETRIEVE_ACCOUNT_BALANCE' && r.enabled
         );
         if (retrieve) general = true;
       }
 
-      // RTP / FEDNOW / WIRES (INSTANT_PAYMENTS_API)
       if (product.name === 'INSTANT_PAYMENTS_API') {
         const createTransfer = product.resources?.some(
-          (r: any) => r.name === 'CREATE_CREDIT_TRANSFER' && r.enabled
+          (r) => r.name === 'CREATE_CREDIT_TRANSFER' && r.enabled
         );
-
         if (createTransfer && product.paymentRails?.length) {
-          product.paymentRails.forEach((rail: any) => {
+          product.paymentRails.forEach((rail) => {
             if (rail.enabled) {
               if (rail.name === 'RTP') rtp = true;
               if (rail.name === 'FEDNOW') fednow = true;
@@ -108,26 +106,152 @@ const ApiCustomerConfig = ({
     api_wire_options.length,
   ]);
 
-  const handleSelectAll = (checked: boolean) => {
-    if (checked) {
-      setApiGeneralValues(api_general_options.map((c) => c.id));
-      setApiRTPValues(api_rtp_options.map((c) => c.id));
-      setApiFedNowValues(api_fednow_options.map((c) => c.id));
-      setApiWiresValues(api_wire_options.map((c) => c.id));
-    } else {
-      setApiGeneralValues([]);
-      setApiRTPValues([]);
-      setApiFedNowValues([]);
-      setApiWiresValues([]);
-    }
-    setIsAllSelected(checked);
+  const updateCustomerProducts = (
+    category: 'GENERAL' | 'RTP' | 'FEDNOW' | 'WIRES',
+    selected: string[]
+  ) => {
+    setCustomer((prev) => {
+      let updatedProducts = [...prev.customerProducts];
+
+      const hasSelection = selected.length > 0;
+
+      if (category === 'GENERAL') {
+        if (hasSelection) {
+          if (!updatedProducts.some((p) => p.name === 'ACCOUNT_BALANCE_API')) {
+            updatedProducts.push({
+              id: null,
+              name: 'ACCOUNT_BALANCE_API',
+              friendlyName: null,
+              shortName: null,
+              description: null,
+              productSettings: null,
+              enabled: true,
+              billable: true,
+              resources: [
+                {
+                  name: 'RETRIEVE_ACCOUNT_BALANCE',
+                  friendlyName: null,
+                  description: null,
+                  enabled: true,
+                  billable: true,
+                },
+              ],
+              paymentRails: null,
+            });
+          }
+        } else {
+          updatedProducts = updatedProducts.filter(
+            (p) => p.name !== 'ACCOUNT_BALANCE_API'
+          );
+        }
+      } else {
+        let ipaProduct = updatedProducts.find(
+          (p) => p.name === 'INSTANT_PAYMENTS_API'
+        );
+
+        if (!ipaProduct && hasSelection) {
+          ipaProduct = {
+            id: null,
+            name: 'INSTANT_PAYMENTS_API',
+            friendlyName: null,
+            shortName: null,
+            description: null,
+            productSettings: null,
+            enabled: true,
+            billable: true,
+            resources: [],
+            paymentRails: [],
+          };
+          updatedProducts.push(ipaProduct);
+        }
+
+        if (ipaProduct) {
+          const railName =
+            category === 'RTP'
+              ? 'RTP'
+              : category === 'FEDNOW'
+              ? 'FEDNOW'
+              : 'WIRES';
+
+          ipaProduct.paymentRails = ipaProduct.paymentRails || [];
+
+          // Add CREATE_CREDIT_TRANSFER resource if missing
+          if (
+            hasSelection &&
+            !ipaProduct.resources.some(
+              (r) => r.name === 'CREATE_CREDIT_TRANSFER'
+            )
+          ) {
+            ipaProduct.resources.push({
+              name: 'CREATE_CREDIT_TRANSFER',
+              friendlyName: null,
+              description: null,
+              enabled: true,
+              billable: true,
+            });
+          }
+
+          if (!hasSelection) {
+            ipaProduct.paymentRails = ipaProduct.paymentRails.filter(
+              (rail) => rail.name !== railName
+            );
+          } else {
+            const existingRail = ipaProduct.paymentRails.find(
+              (rail) => rail.name === railName
+            );
+            if (!existingRail) {
+              ipaProduct.paymentRails.push({
+                name: railName,
+                friendlyName: null,
+                description: null,
+                enabled: true,
+                billable: true,
+                paymentRailSettings: {
+                  transactionLimit: 0,
+                  cumulativeTransactionLimit: 0,
+                  duplicateCheckDuration: 0,
+                },
+              });
+            }
+          }
+
+          // Clean up if IPA has no rails or resources left
+          if (
+            ipaProduct.paymentRails.length === 0 &&
+            ipaProduct.resources.length === 0
+          ) {
+            updatedProducts = updatedProducts.filter(
+              (p) => p.name !== 'INSTANT_PAYMENTS_API'
+            );
+          }
+        }
+      }
+
+      return {
+        ...prev,
+        customerProducts: updatedProducts,
+      };
+    });
   };
 
-  const handleChange =
-    (setter: React.Dispatch<React.SetStateAction<string[]>>) =>
-    (values: string[]) => {
-      setter(values);
-    };
+  const handleSelectAll = (checked: boolean) => {
+    const general = checked ? api_general_options.map((c) => c.id) : [];
+    const rtp = checked ? api_rtp_options.map((c) => c.id) : [];
+    const fednow = checked ? api_fednow_options.map((c) => c.id) : [];
+    const wires = checked ? api_wire_options.map((c) => c.id) : [];
+
+    setApiGeneralValues(general);
+    setApiRTPValues(rtp);
+    setApiFedNowValues(fednow);
+    setApiWiresValues(wires);
+
+    updateCustomerProducts('GENERAL', general);
+    updateCustomerProducts('RTP', rtp);
+    updateCustomerProducts('FEDNOW', fednow);
+    updateCustomerProducts('WIRES', wires);
+
+    setIsAllSelected(checked);
+  };
 
   return (
     <Box className="section">
@@ -139,7 +263,7 @@ const ApiCustomerConfig = ({
           label="Select all"
           disabled={disabled}
           checked={isAllSelected}
-          onChange={(e: any) => handleSelectAll(e.target.checked)}
+          onChange={(e) => handleSelectAll(e.target.checked)}
         />
       </Box>
 
@@ -149,28 +273,40 @@ const ApiCustomerConfig = ({
           checkboxes={api_general_options}
           disabled={disabled}
           selectedValues={apiGeneralValues}
-          onChange={handleChange(setApiGeneralValues)}
+          onChange={(values) => {
+            setApiGeneralValues(values);
+            updateCustomerProducts('GENERAL', values);
+          }}
         />
         <CardCheckbox
           title="US RTP"
           checkboxes={api_rtp_options}
           disabled={disabled}
           selectedValues={apiRTPValues}
-          onChange={handleChange(setApiRTPValues)}
+          onChange={(values) => {
+            setApiRTPValues(values);
+            updateCustomerProducts('RTP', values);
+          }}
         />
         <CardCheckbox
           title="FedNow"
-          disabled={disabled}
           checkboxes={api_fednow_options}
+          disabled={disabled}
           selectedValues={apiFedNowValues}
-          onChange={handleChange(setApiFedNowValues)}
+          onChange={(values) => {
+            setApiFedNowValues(values);
+            updateCustomerProducts('FEDNOW', values);
+          }}
         />
         <CardCheckbox
           title="Wire"
-          disabled={disabled}
           checkboxes={api_wire_options}
+          disabled={disabled}
           selectedValues={apiWiresValues}
-          onChange={handleChange(setApiWiresValues)}
+          onChange={(values) => {
+            setApiWiresValues(values);
+            updateCustomerProducts('WIRES', values);
+          }}
         />
       </Box>
     </Box>
@@ -178,182 +314,3 @@ const ApiCustomerConfig = ({
 };
 
 export default ApiCustomerConfig;
-
-
- const apiCustomerData: ICustomerData = {
-    gatewayCustomerId: 'e659aa04-65fc-42f4-8133-32b9cf9040e8',
-    name: 'Test',
-    cisNumbers: ['100100100155'],
-    enabled: true,
-    customerSettings: {
-      transactionLimit: 1000000,
-      cumulativeTransactionLimit: 5000000,
-      processingWindow: '00:00-23:59',
-      processingWindowTimezone: 'CST',
-    },
-    customerType: 'COMMERCIAL',
-    virtualAcctCustomer: false,
-    demoCustomer: true,
-    customerAccounts: [
-      {
-        number: '1000100010055',
-        name: 'CBNK00001_00008',
-        routingNumber: '072000096',
-        bankCode: '10002',
-        cisNumbers: ['100100100155'],
-        accountSettings: {
-          transactionLimit: 100,
-          cumulativeTransactionLimit: 10000,
-        },
-        billingAccount: true,
-        enabled: true,
-        products: [
-          {
-            id: null,
-            name: 'INSTANT_PAYMENTS_API',
-            friendlyName: null,
-            shortName: null,
-            description: null,
-            productSettings: null,
-            enabled: true,
-            billable: true,
-            resources: [
-              {
-                name: 'CREATE_CREDIT_TRANSFER',
-                friendlyName: null,
-                description: null,
-                enabled: true,
-                billable: true,
-              },
-              {
-                name: 'RETRIEVE_CREDIT_TRANSFER',
-                friendlyName: null,
-                description: null,
-                enabled: true,
-                billable: true,
-              },
-            ],
-            paymentRails: [
-              {
-                name: 'RTP',
-                friendlyName: null,
-                description: null,
-                paymentRailSettings: {
-                  transactionLimit: 100,
-                  cumulativeTransactionLimit: 10000,
-                  duplicateCheckDuration: 0,
-                  allowedCreditAccountList: [
-                    {
-                      accountNumber:
-                        '{"accountNumber": "123456789", "routingNumber": "123456789"}',
-                      routingNumber: null,
-                    },
-                  ],
-                },
-                enabled: true,
-                billable: true,
-              },
-            ],
-          },
-        ],
-      },
-    ],
-    customerProducts: [
-      {
-        id: null,
-        name: 'ACCOUNT_BALANCE_API',
-        friendlyName: null,
-        shortName: null,
-        description: null,
-        productSettings: null,
-        enabled: true,
-        billable: true,
-        resources: [
-          {
-            name: 'RETRIEVE_ACCOUNT_BALANCE',
-            friendlyName: null,
-            description: null,
-            enabled: true,
-            billable: true,
-          },
-        ],
-        paymentRails: null,
-      },
-      {
-        id: null,
-        name: 'INSTANT_PAYMENTS_API',
-        friendlyName: null,
-        shortName: null,
-        description: null,
-        productSettings: null,
-        enabled: true,
-        billable: true,
-        resources: [
-          {
-            name: 'CREATE_CREDIT_TRANSFER',
-            friendlyName: null,
-            description: null,
-            enabled: true,
-            billable: true,
-          },
-          {
-            name: 'RETRIEVE_CREDIT_TRANSFER',
-            friendlyName: null,
-            description: null,
-            enabled: true,
-            billable: true,
-          },
-        ],
-        paymentRails: [
-          {
-            name: 'RTP',
-            friendlyName: null,
-            description: null,
-            paymentRailSettings: {
-              transactionLimit: 500000,
-              cumulativeTransactionLimit: 2000000,
-              duplicateCheckDuration: 0,
-            },
-            enabled: true,
-            billable: true,
-          },
-          {
-            name: 'FEDNOW',
-            friendlyName: null,
-            description: null,
-            paymentRailSettings: {
-              transactionLimit: 500000,
-              cumulativeTransactionLimit: 2000000,
-              duplicateCheckDuration: 0,
-            },
-            enabled: true,
-            billable: true,
-          },
-        ],
-      },
-    ],
-    billingCustomerId: 'SHB1001005',
-    createdBy: 'IPA',
-    customerContacts: [
-      {
-        contactName: 'James',
-        contactTitle: 'QA Engineer',
-        contactPhone: '129-000-0002',
-        contactPhoneType: 'MOBILE',
-        contactEmail: 'james.murphy@comerica.com',
-        contactPreferredType: 'Email',
-        contactType: 'SECONDARY',
-        enabled: false,
-      },
-      {
-        contactName: 'Ben Reynold',
-        contactTitle: 'Developer',
-        contactPhone: '5309999999 ext 2345',
-        contactPhoneType: 'WORK',
-        contactEmail: 'ben.reynold@comerica.com',
-        contactPreferredType: 'Phone',
-        contactType: 'TERTIARY',
-        enabled: false,
-      },
-    ],
-  };
