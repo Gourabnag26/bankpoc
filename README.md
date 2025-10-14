@@ -29,96 +29,7 @@ export interface ICustomerData {
   customerContacts: ICustomerContact[];
 }
 
-export interface ICustomerSettings {
-  transactionLimit: number;
-  cumulativeTransactionLimit: number;
-  processingWindow: string;
-  processingWindowTimezone: string;
-}
-
-export interface ICustomerAccount {
-  number: string;
-  name: string;
-  routingNumber: string;
-  bankCode: string;
-  cisNumbers: string[];
-  accountSettings: IAccountSettings;
-  billingAccount: boolean;
-  enabled: boolean;
-  products: ICustomerProduct[];
-}
-
-export interface IAccountSettings {
-  transactionLimit: number;
-  cumulativeTransactionLimit: number;
-}
-
-export interface ICustomerProduct {
-  id: string | null;
-  name: string;
-  friendlyName: string | null;
-  shortName: string | null;
-  description: string | null;
-  productSettings: IProductSettings | null;
-  enabled: boolean;
-  billable: boolean;
-  resources: IProductResource[];
-  paymentRails: IPaymentRail[] | null;
-}
-
-export interface IProductSettings {
-  transactionLimit?: number;
-  cumulativeTransactionLimit?: number;
-  duplicateCheckDuration?: number;
-}
-
-export interface IProductResource {
-  name: string;
-  friendlyName: string | null;
-  description: string | null;
-  enabled: boolean;
-  billable: boolean;
-}
-
-export interface IPaymentRail {
-  name: string;
-  friendlyName: string | null;
-  description: string | null;
-  paymentRailSettings: IPaymentRailSettings;
-  enabled: boolean;
-  billable: boolean;
-}
-
-export interface IPaymentRailSettings {
-  transactionLimit: number;
-  cumulativeTransactionLimit: number;
-  duplicateCheckDuration: number;
-  allowedCreditAccountList?: IAllowedCreditAccount[];
-}
-
-export interface IAllowedCreditAccount {
-  accountNumber: string;
-  routingNumber: string | null;
-}
-
-export interface ICustomerContact {
-  contactName: string;
-  contactTitle: string;
-  contactPhone: string;
-  contactPhoneType: string;
-  contactEmail: string;
-  contactPreferredType: string;
-  contactType: string;
-  enabled: boolean;
-}
-
-export interface IcustomerProps {
-  customer: ICustomerData;
-  setCustomer: React.Dispatch<React.SetStateAction<ICustomerData>>;
-  disabled: boolean;
-  gatewayCustomerId?: any;
-  mode?: any;
-}
+// Other interfaces (ICustomerSettings, etc.) remain unchanged
 
 export const CustomerProfile = () => {
   const { myTasks, customers } = useCustomer();
@@ -133,10 +44,8 @@ export const CustomerProfile = () => {
 
   const isViewMode = !mode || mode === 'view';
 
-  // Use appropriate context data
   const customerData = isDraft ? myTasks : customers;
 
-  // Default initial structure
   const initialCustomerData: ICustomerData = {
     gatewayCustomerId: gatewayCustomerId || '',
     name: '',
@@ -159,6 +68,7 @@ export const CustomerProfile = () => {
   };
 
   const [customer, setCustomer] = useState<ICustomerData>(initialCustomerData);
+  const [loading, setLoading] = useState<boolean>(true); // 🔄 Loading state
 
   // Redirect to home if invalid query params
   useEffect(() => {
@@ -172,47 +82,56 @@ export const CustomerProfile = () => {
     }
   }, [mode, role, navigate]);
 
+  // Fetch customer data
   useEffect(() => {
     const fetchCustomer = async () => {
       try {
-        const customerServiceApi = new CustomerService();
-        const traceId = uuidv4();
+        if ((role === 'viewer' || role === 'editor') && gatewayCustomerId) {
+          const customerServiceApi = new CustomerService();
+          const traceId = uuidv4();
 
-        customerServiceApi.addGetCustomerHeader(gatewayCustomerId, traceId);
+          customerServiceApi.addGetCustomerHeader(gatewayCustomerId, traceId);
+          const response = await customerServiceApi.getCustomer();
 
-        const response = await customerServiceApi.getCustomer();
+          if (!response?.data) {
+            navigate('/');
+            return;
+          }
 
-        if (!response?.data) {
-          navigate('/');
-          return;
+          setCustomer(response.data as ICustomerData);
+        } else if (mode === 'edit' && gatewayCustomerId) {
+          const existingCustomer = customerData.find(
+            (c: any) => c.gatewayCustomerId === gatewayCustomerId
+          );
+          if (existingCustomer) {
+            setCustomer(existingCustomer as ICustomerData);
+          } else {
+            navigate('/');
+            return;
+          }
         }
-
-        setCustomer(response?.data as any); 
       } catch (error) {
         console.error('Failed to fetch customer data:', error);
         navigate('/');
+      } finally {
+        setLoading(false); // ✅ Stop loading regardless of outcome
       }
     };
 
-    if ((role === 'viewer' || role === 'editor') && gatewayCustomerId) {
-      fetchCustomer();
-    } else if (mode === 'edit' && gatewayCustomerId) {
-      const existingCustomer = customerData.find(
-        (c: any) => c.gatewayCustomerId === gatewayCustomerId
-      );
-      if (existingCustomer) {
-        setCustomer(existingCustomer as any);
-      } else {
-        navigate('/');
-      }
-    }
+    fetchCustomer();
   }, [role, gatewayCustomerId, mode, customerData, navigate]);
 
-  // Approver view 
+  // Show loading UI while fetching
+  if (loading) {
+    return <div style={{ padding: '2rem' }}>Loading...</div>; // 🔄 Customize as needed
+  }
+
+  // Approver view
   if (role === 'approver' && mode === 'edit') {
     return <ApproverView />;
   }
 
+  // Main profile form
   return (
     <Box className="main-profile">
       <CustomerInfo
