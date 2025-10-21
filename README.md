@@ -1,60 +1,96 @@
-import { Status, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from '@ucl/ui-components';
+import {
+  Status,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Typography,
+} from '@ucl/ui-components';
 import ActionColumn from '../role-icons/role-icons';
 import { Constants } from '../../../shared/utils/constants';
 
 const MyTasksTable = ({ tableHeaders, tableBody, currentRole }: any) => {
+  // Normalize and filter data for approvers
+  const filteredData =
+    tableBody &&
+    tableBody.filter((item: any) => {
+      const status = item.status?.toLowerCase().replace(/_/g, ' ');
+      if (currentRole === 'approver') {
+        return status === 'pending approval' || status === 'approved';
+      }
+      return true;
+    });
 
-  const filteredData = tableBody && tableBody.filter((item: any) => currentRole === 'approver' ? item.status === 'Pending Approval' || item.status === 'Approved' : true);
-  const
   return (
     <>
       <TableContainer>
         <Table>
           <TableHead>
             <TableRow>
-              {tableHeaders && tableHeaders.map((headerName: any, key: any) => (
-                <TableCell key={key}>{headerName}</TableCell>
-              ))}
+              {tableHeaders &&
+                tableHeaders.map((headerName: any, key: any) => (
+                  <TableCell key={key}>{headerName}</TableCell>
+                ))}
             </TableRow>
           </TableHead>
-          {
-            <TableBody>
-              {currentRole !== 'viewer' && filteredData && filteredData?.map((data: any) => (
-                <TableRow key={data.gatewayCustomerId}>
-                  {data.customerName && (
-                    <TableCell>{data.customerName}</TableCell>
-                  )}
-                  {data.gatewayCustomerId && (
-                    <TableCell>{data.gatewayCustomerId}</TableCell>
-                  )}
-                  {data.customerConfig.cisNumbers[0] && <TableCell>{data.customerConfig.cisNumbers[0]}</TableCell>}
-                  {data.customerType && (
-                    <TableCell>{data.customerType}</TableCell>
-                  )}
-                  {data.tmccCase && <TableCell>{data.tmccCase}</TableCell>}
-                  {data.status && (
+
+          <TableBody>
+            {currentRole !== 'viewer' &&
+              filteredData &&
+              filteredData.map((data: any) => {
+                // Parse customerConfig safely
+                let customerConfig: any = {};
+                try {
+                  customerConfig =
+                    typeof data.customerConfig === 'string'
+                      ? JSON.parse(data.customerConfig)
+                      : data.customerConfig;
+                } catch (err) {
+                  console.warn('Invalid customerConfig JSON:', err);
+                  customerConfig = {};
+                }
+
+                const statusLabel =
+                  data.status?.replaceAll('_', ' ') ?? 'Unknown';
+                const statusColor =
+                  Constants.authStatusColorCodes[data.status] ?? 'default';
+
+                return (
+                  <TableRow key={data.gatewayCustomerId}>
+                    <TableCell>{data.customerName || '-'}</TableCell>
+                    <TableCell>{data.gatewayCustomerId || '-'}</TableCell>
+                    <TableCell>
+                      {customerConfig.cisNumbers?.[0] || '-'}
+                    </TableCell>
+                    <TableCell>
+                      {customerConfig.customerType || '-'}
+                    </TableCell>
+                    <TableCell>{data.tmccCase || '-'}</TableCell>
                     <TableCell>
                       <Status
-                        variant={'filled'}
-                        label={data.status.replaceAll("_"," ")}
-                        color={Constants.authStatusColorCodes[data.status]}
+                        variant="filled"
+                        label={statusLabel}
+                        color={statusColor}
                       />
                     </TableCell>
-                  )}
-                  <TableCell>
-                    <ActionColumn
-                      role={currentRole}
-                      table="My Tasks"
-                      status={data.status}
-                      id={data.gatewayCustomerId}
-                    />
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          }
+                    <TableCell>
+                      <ActionColumn
+                        role={currentRole}
+                        table="My Tasks"
+                        status={data.status}
+                        id={data.gatewayCustomerId}
+                      />
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+          </TableBody>
         </Table>
       </TableContainer>
+
+      {/* Show "No Record" for viewer role */}
       {currentRole === 'viewer' && (
         <Typography
           variant="body1"
