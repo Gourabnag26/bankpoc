@@ -1,108 +1,87 @@
-import {
-  Status,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Typography,
-} from '@ucl/ui-components';
-import ActionColumn from '../role-icons/role-icons';
-import { Constants } from '../../../shared/utils/constants';
+import { render, screen } from "@testing-library/react";
+import MyTasksTable from "./MyTasksTable";
+import { Constants } from "../../../shared/utils/constants";
 
-const MyTasksTable = ({ tableHeaders, tableBody, currentRole }: any) => {
-  //approver filter
-  const filteredData =
-    tableBody &&
-    tableBody.filter((item: any) => {
-      const status = item.status?.toLowerCase().replace(/_/g, ' ');
-      if (currentRole === 'approver') {
-        return status === 'pending approval' || status === 'approved';
-      }
-      return true;
+// Mock components from external libraries
+jest.mock("@ucl/ui-components", () => ({
+  Status: ({ label }: any) => <div data-testid="status">{label}</div>,
+  Table: ({ children }: any) => <table>{children}</table>,
+  TableBody: ({ children }: any) => <tbody>{children}</tbody>,
+  TableCell: ({ children }: any) => <td>{children}</td>,
+  TableContainer: ({ children }: any) => <div>{children}</div>,
+  TableHead: ({ children }: any) => <thead>{children}</thead>,
+  TableRow: ({ children }: any) => <tr>{children}</tr>,
+  Typography: ({ children }: any) => <div data-testid="typography">{children}</div>,
+}));
+
+jest.mock("../role-icons/role-icons", () => ({
+  __esModule: true,
+  default: ({ role, id }: any) => <div data-testid="action-column">{`${role}-${id}`}</div>,
+}));
+
+Constants.LABEL = { NO_RECORD: "No Record Found" };
+Constants.authStatusColorCodes = { approved: "green", pending_approval: "yellow" };
+
+describe("MyTasksTable Component", () => {
+  const tableHeaders = ["Customer Name", "Customer ID", "Status"];
+
+  const mockData = [
+    {
+      customerName: "Alice",
+      gatewayCustomerId: "CUST001",
+      customerConfig: JSON.stringify({ cisNumbers: ["CIS001"], customerType: "TypeA" }),
+      status: "approved",
+      tmccCase: "CASE123",
+    },
+    {
+      customerName: "Bob",
+      gatewayCustomerId: "CUST002",
+      customerConfig: JSON.stringify({ cisNumbers: ["CIS002"], customerType: "TypeB" }),
+      status: "pending_approval",
+      tmccCase: "CASE999",
+    },
+    {
+      customerName: "Charlie",
+      gatewayCustomerId: "CUST003",
+      customerConfig: JSON.stringify({ cisNumbers: ["CIS003"], customerType: "TypeC" }),
+      status: "rejected",
+      tmccCase: "CASE456",
+    },
+  ];
+
+  it("renders all table headers", () => {
+    render(<MyTasksTable tableHeaders={tableHeaders} tableBody={mockData} currentRole="admin" />);
+    tableHeaders.forEach((header) => {
+      expect(screen.getByText(header)).toBeInTheDocument();
     });
+  });
 
-  return (
-    <>
-      <TableContainer>
-        <Table>
-          <TableHead>
-            <TableRow>
-              {tableHeaders &&
-                tableHeaders.map((headerName: any, key: any) => (
-                  <TableCell key={key}>{headerName}</TableCell>
-                ))}
-            </TableRow>
-          </TableHead>
+  it("shows filtered data for approver role (only pending approval or approved)", () => {
+    render(<MyTasksTable tableHeaders={tableHeaders} tableBody={mockData} currentRole="approver" />);
+    expect(screen.getByText("Alice")).toBeInTheDocument();
+    expect(screen.getByText("Bob")).toBeInTheDocument();
+    expect(screen.queryByText("Charlie")).not.toBeInTheDocument(); // rejected should be filtered out
+  });
 
-          <TableBody>
-            {currentRole !== 'viewer' &&
-              filteredData &&
-              filteredData.map((data: any) => {
-                let customerConfig: any = {};
-                try {
-                  customerConfig =
-                    typeof data.customerConfig === 'string'
-                      ? JSON.parse(data.customerConfig)
-                      : data.customerConfig;
-                } catch (err) {
-                  console.warn('Invalid customerConfig JSON:', err);
-                  customerConfig = {};
-                }
+  it("renders ActionColumn for each data row when not viewer", () => {
+    render(<MyTasksTable tableHeaders={tableHeaders} tableBody={mockData} currentRole="admin" />);
+    const actionColumns = screen.getAllByTestId("action-column");
+    expect(actionColumns.length).toBe(mockData.length);
+  });
 
-                const statusLabel =
-                  data.status?.replaceAll('_', ' ') ?? 'Unknown';
-                const statusColor =
-                  Constants.authStatusColorCodes[data.status] ?? 'default';
+  it("renders 'No Record Found' text for viewer role", () => {
+    render(<MyTasksTable tableHeaders={tableHeaders} tableBody={mockData} currentRole="viewer" />);
+    expect(screen.getByTestId("typography")).toHaveTextContent("No Record Found");
+  });
 
-                return (
-                  <TableRow key={data.gatewayCustomerId}>
-                    <TableCell>{data.customerName || '-'}</TableCell>
-                    <TableCell>{data.gatewayCustomerId || '-'}</TableCell>
-                    <TableCell>
-                      {customerConfig.cisNumbers?.[0] || '-'}
-                    </TableCell>
-                    <TableCell>{customerConfig.customerType || '-'}</TableCell>
-                    <TableCell>{data.tmccCase || '-'}</TableCell>
-                    <TableCell>
-                      <Status
-                        variant="filled"
-                        label={statusLabel}
-                        color={statusColor}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <ActionColumn
-                        role={currentRole}
-                        table="My Tasks"
-                        status={data.status.toLowerCase().replaceAll("_"," ")}
-                        id={data.gatewayCustomerId}
-                      />
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-          </TableBody>
-        </Table>
-      </TableContainer>
+  it("renders Status component with formatted label", () => {
+    render(<MyTasksTable tableHeaders={tableHeaders} tableBody={[mockData[0]]} currentRole="admin" />);
+    expect(screen.getByTestId("status")).toHaveTextContent("approved");
+  });
 
-      {/* Show "No Record" for viewer role */}
-      {currentRole === 'viewer' && (
-        <Typography
-          variant="body1"
-          sx={{
-            display: 'flex',
-            height: '50vh',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          {Constants.LABEL.NO_RECORD}
-        </Typography>
-      )}
-    </>
-  );
-};
-
-export default MyTasksTable;
+  it("handles invalid JSON in customerConfig gracefully", () => {
+    const invalidData = [{ ...mockData[0], customerConfig: "{invalidJson}" }];
+    render(<MyTasksTable tableHeaders={tableHeaders} tableBody={invalidData} currentRole="admin" />);
+    expect(screen.getByText("Alice")).toBeInTheDocument(); // still renders row
+  });
+});
