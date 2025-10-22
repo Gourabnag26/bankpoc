@@ -1,125 +1,85 @@
-import { render, screen } from "@testing-library/react";
-import { MemoryRouter } from "react-router-dom";
-import MyTasksTable from "./MyTasksTable";
-import { Constants } from "../../../shared/utils/constants";
+import { useEffect, useState } from "react";
+import { useCustomer } from "../../context/customer-context";
+import MyTasksTable from "../../components/my-tasks-table/my-tasks-table";
+import MyTasksTableData from "../../../shared/dummy-json/my-tasks.json";
+import { useRole } from "../../../shared/utils/role-manager";
+import DataLoader from "../../components/data-loader/data-loader";
+import { CustomerService } from "shared";
 
-Constants.LABEL = { NO_RECORD: "No Record Found" };
-Constants.authStatusColorCodes = {
-  approved: "green",
-  pending_approval: "yellow",
-  rejected: "red",
+export const MyTasks = () => {
+  const [tableData] = useState(MyTasksTableData);
+  const role = useRole();
+  const { myTasks, setMyTasks } = useCustomer();
+  const [loading, setLoading] = useState(true);
+  const myTaskApi = new CustomerService();
+  useEffect(() => {
+    const fetchDummyTasks = () => {
+      setTimeout(() => {
+        const dummyApiResponse = {
+          draftList: [
+            {
+              taskId: 2,
+              gatewayCustomerId: "ff8555cc-e370-4aba-ae92-dc513843199q",
+              status: "PENDING_APPROVAL",
+              customerName: "Test Customer1",
+              customerConfig:
+                '{"name": "Test Customer1", "enabled": true, "createdBy": "LIQUIBASE", "cisNumbers": ["6666999999"], "customerType": "COMMERCIAL", "demoCustomer": false, "customerAccounts": [{"name": "Test Customer1Account1", "number": "1001223559", "enabled": true, "bankCode": "88833", "cisNumbers": ["6666999999"], "routingNumber": "771666333", "billingAccount": true, "accountSettings": {"transactionLimit": 2000, "cumulativeTransactionLimit": 10000}}, {"name": "Test Customer1Account2", "number": "1002587325", "enabled": true, "bankCode": "66655", "cisNumbers": ["6666999999"], "routingNumber": "771666222", "billingAccount": false, "accountSettings": {"transactionLimit": 5000, "cumulativeTransactionLimit": 20000}}]}',
+              createdBy: "User1",
+              updatedBy: "User1",
+            },
+            {
+              taskId: 1,
+              gatewayCustomerId: "8b7af1ae-53f2-4e34-85cd-a86c896970df",
+              status: "DRAFT",
+              customerName: "Customer198",
+              customerConfig:
+                '{"name": "Customer198", "enabled": true, "createdBy": "LIQUIBASE", "cisNumbers": ["5132445678"], "customerType": "COMMERCIAL", "demoCustomer": false, "customerAccounts": [{"name": "197Account3", "number": "7005984461", "enabled": true, "bankCode": "77231", "cisNumbers": ["5132445678"], "routingNumber": "772666322", "billingAccount": true, "accountSettings": {"transactionLimit": 100, "cumulativeTransactionLimit": 30000}}, {"name": "197Account4", "number": "7006219180", "enabled": true, "bankCode": "45144", "cisNumbers": ["5132445678"], "routingNumber": "772666422", "billingAccount": false, "accountSettings": {"transactionLimit": 1000, "cumulativeTransactionLimit": 5000}}]}',
+              createdBy: "User1",
+              updatedBy: "User1",
+            },
+          ],
+          completedList: [
+            {
+              taskId: 3,
+              gatewayCustomerId: "c59e7d0b-b54d-429c-a000-ad260a370e7c",
+              status: "APPROVED",
+              customerName: "Customer503",
+              customerConfig:
+                '{"name": "Customer503", "enabled": true, "createdBy": "LIQUIBASE", "cisNumbers": ["1866535234"], "customerType": "COMMERCIAL", "demoCustomer": false, "customerAccounts": [{"name": "Customer503", "number": "1890623604", "enabled": true, "bankCode": "10002", "cisNumbers": ["1866535234"], "routingNumber": "111000753", "billingAccount": true, "accountSettings": {"transactionLimit": 11000, "cumulativeTransactionLimit": 15000}}]}',
+              createdBy: "User1",
+              updatedBy: "User1",
+              approvedBy: "Approver1",
+            },
+          ],
+          approveList: [],
+        };
+
+       
+        const combinedList = [
+          ...dummyApiResponse.draftList,
+          ...dummyApiResponse.completedList,
+          ...dummyApiResponse.approveList,
+        ];
+
+  
+        setMyTasks(combinedList);
+        setLoading(false);
+      }, 1500); 
+    };
+
+    fetchDummyTasks();
+  }, [setMyTasks]);
+
+ 
+
+  return (
+    <DataLoader loading={loading}>
+    <MyTasksTable
+      tableHeaders={tableData.tableHeaders}
+      tableBody={myTasks}
+      currentRole={role}
+    />
+    </DataLoader>
+  );
 };
-
-describe("MyTasksTable Component", () => {
-  const tableHeaders = [
-    "Customer Name",
-    "Customer ID",
-    "CIS",
-    "Type",
-    "Case",
-    "Status",
-    "Actions",
-  ];
-
-  const mockTableBody = [
-    {
-      customerName: "User1",
-      gatewayCustomerId: "ID001",
-      customerConfig: JSON.stringify({
-        cisNumbers: ["CIS001"],
-        customerType: "Retail",
-      }),
-      tmccCase: "CASE001",
-      status: "APPROVED",
-    },
-    {
-      customerName: "User2",
-      gatewayCustomerId: "ID002",
-      customerConfig: JSON.stringify({
-        cisNumbers: ["CIS002"],
-        customerType: "Corporate",
-      }),
-      tmccCase: "CASE002",
-      status: "PENDING_APPROVAL",
-    },
-    {
-      customerName: "User3",
-      gatewayCustomerId: "ID003",
-      customerConfig: JSON.stringify({
-        cisNumbers: ["CIS003"],
-        customerType: "SME",
-      }),
-      tmccCase: "CASE003",
-      status: "REJECTED",
-    },
-  ];
-
-  const renderWithRouter = (ui: React.ReactNode) => {
-    return render(<MemoryRouter>{ui}</MemoryRouter>);
-  };
-
-  // ✅ test1
-  it("test1: renders all table headers", () => {
-    renderWithRouter(
-      <MyTasksTable
-        tableHeaders={tableHeaders}
-        tableBody={mockTableBody}
-        currentRole="admin"
-      />
-    );
-
-    tableHeaders.forEach((header) => {
-      screen.getByText(header);
-    });
-  });
-
-  // ✅ test2
-  it("test2: filters approved and pending approval for approver role", () => {
-    renderWithRouter(
-      <MyTasksTable
-        tableHeaders={tableHeaders}
-        tableBody={mockTableBody}
-        currentRole="approver"
-      />
-    );
-
-    screen.getByText("User1");
-    screen.getByText("User2");
-
-    const user3 = screen.queryByText("User3");
-    expect(user3).toBeNull();
-  });
-
-  // ✅ test3
-  it("test3: renders 'No Record Found' for viewer role", () => {
-    renderWithRouter(
-      <MyTasksTable
-        tableHeaders={tableHeaders}
-        tableBody={mockTableBody}
-        currentRole="viewer"
-      />
-    );
-
-    screen.getByText(Constants.LABEL.NO_RECORD);
-  });
-
-  // ✅ test4
-  it("test4: handles invalid JSON in customerConfig", () => {
-    const invalidData = [
-      {
-        ...mockTableBody[0],
-        customerConfig: "{invalidJSON}",
-      },
-    ];
-
-    renderWithRouter(
-      <MyTasksTable
-        tableHeaders={tableHeaders}
-        tableBody={invalidData}
-        currentRole="admin"
-      />
-    );
-
-    screen.getByText("User1"); // renders safely
-  });
-});
+m
