@@ -1,121 +1,108 @@
-import { render, screen } from "@testing-library/react";
-import MyTasksTable from "./MyTasksTable";
-import { Constants } from "../../../shared/utils/constants";
+import {
+  Status,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Typography,
+} from '@ucl/ui-components';
+import ActionColumn from '../role-icons/role-icons';
+import { Constants } from '../../../shared/utils/constants';
 
-Constants.LABEL = { NO_RECORD: "No Record Found" };
-Constants.authStatusColorCodes = {
-  approved: "green",
-  pending_approval: "yellow",
-  rejected: "red",
+const MyTasksTable = ({ tableHeaders, tableBody, currentRole }: any) => {
+  //approver filter
+  const filteredData =
+    tableBody &&
+    tableBody.filter((item: any) => {
+      const status = item.status?.toLowerCase().replace(/_/g, ' ');
+      if (currentRole === 'approver') {
+        return status === 'pending approval' || status === 'approved';
+      }
+      return true;
+    });
+
+  return (
+    <>
+      <TableContainer>
+        <Table>
+          <TableHead>
+            <TableRow>
+              {tableHeaders &&
+                tableHeaders.map((headerName: any, key: any) => (
+                  <TableCell key={key}>{headerName}</TableCell>
+                ))}
+            </TableRow>
+          </TableHead>
+
+          <TableBody>
+            {currentRole !== 'viewer' &&
+              filteredData &&
+              filteredData.map((data: any) => {
+                let customerConfig: any = {};
+                try {
+                  customerConfig =
+                    typeof data.customerConfig === 'string'
+                      ? JSON.parse(data.customerConfig)
+                      : data.customerConfig;
+                } catch (err) {
+                  console.warn('Invalid customerConfig JSON:', err);
+                  customerConfig = {};
+                }
+
+                const statusLabel =
+                  data.status?.replaceAll('_', ' ') ?? 'Unknown';
+                const statusColor =
+                  Constants.authStatusColorCodes[data.status] ?? 'default';
+
+                return (
+                  <TableRow key={data.gatewayCustomerId}>
+                    <TableCell>{data.customerName || '-'}</TableCell>
+                    <TableCell>{data.gatewayCustomerId || '-'}</TableCell>
+                    <TableCell>
+                      {customerConfig.cisNumbers?.[0] || '-'}
+                    </TableCell>
+                    <TableCell>{customerConfig.customerType || '-'}</TableCell>
+                    <TableCell>{data.tmccCase || '-'}</TableCell>
+                    <TableCell>
+                      <Status
+                        variant="filled"
+                        label={statusLabel}
+                        color={statusColor}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <ActionColumn
+                        role={currentRole}
+                        table="My Tasks"
+                        status={data.status.toLowerCase().replaceAll("_"," ")}
+                        id={data.gatewayCustomerId}
+                      />
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+          </TableBody>
+        </Table>
+      </TableContainer>
+
+      {/* Show "No Record" for viewer role */}
+      {currentRole === 'viewer' && (
+        <Typography
+          variant="body1"
+          sx={{
+            display: 'flex',
+            height: '50vh',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          {Constants.LABEL.NO_RECORD}
+        </Typography>
+      )}
+    </>
+  );
 };
 
-describe("MyTasksTable Component", () => {
-  const tableHeaders = [
-    "Customer Name",
-    "Customer ID",
-    "CIS",
-    "Type",
-    "Case",
-    "Status",
-    "Actions",
-  ];
-
-  const mockTableBody = [
-    {
-      customerName: "Alice",
-      gatewayCustomerId: "G001",
-      customerConfig: JSON.stringify({
-        cisNumbers: ["CIS123"],
-        customerType: "Retail",
-      }),
-      tmccCase: "TMCC001",
-      status: "APPROVED",
-    },
-    {
-      customerName: "Bob",
-      gatewayCustomerId: "G002",
-      customerConfig: JSON.stringify({
-        cisNumbers: ["CIS456"],
-        customerType: "Corporate",
-      }),
-      tmccCase: "TMCC002",
-      status: "PENDING_APPROVAL",
-    },
-    {
-      customerName: "Charlie",
-      gatewayCustomerId: "G003",
-      customerConfig: JSON.stringify({
-        cisNumbers: ["CIS789"],
-        customerType: "SME",
-      }),
-      tmccCase: "TMCC003",
-      status: "REJECTED",
-    },
-  ];
-
-  // ✅ Test 1: Renders all headers
-  it("renders all table headers", () => {
-    render(
-      <MyTasksTable
-        tableHeaders={tableHeaders}
-        tableBody={mockTableBody}
-        currentRole="admin"
-      />
-    );
-
-    tableHeaders.forEach((header) => {
-      // if getByText doesn't throw, header exists
-      screen.getByText(header);
-    });
-  });
-
-  // ✅ Test 2: Approver role filter
-  it("shows only approved and pending approval for approver role", () => {
-    render(
-      <MyTasksTable
-        tableHeaders={tableHeaders}
-        tableBody={mockTableBody}
-        currentRole="approver"
-      />
-    );
-
-    screen.getByText("Alice"); // approved
-    screen.getByText("Bob"); // pending approval
-
-    const charlie = screen.queryByText("Charlie");
-    expect(charlie).toBeNull(); // rejected should not be shown
-  });
-
-  // ✅ Test 3: Viewer role message
-  it("renders No Record Found for viewer role", () => {
-    render(
-      <MyTasksTable
-        tableHeaders={tableHeaders}
-        tableBody={mockTableBody}
-        currentRole="viewer"
-      />
-    );
-
-    screen.getByText(Constants.LABEL.NO_RECORD);
-  });
-
-  // ✅ Test 4: Invalid JSON safety
-  it("handles invalid customerConfig JSON safely", () => {
-    const invalidData = [
-      {
-        ...mockTableBody[0],
-        customerConfig: "{invalidJSON}",
-      },
-    ];
-
-    render(
-      <MyTasksTable
-        tableHeaders={tableHeaders}
-        tableBody={invalidData}
-        currentRole="admin"
-      />
-    );
-
-    screen.getByText("Alice"); // still renders safely
-  });
-});
+export default MyTasksTable;
