@@ -1,87 +1,201 @@
+
 import { render, screen } from "@testing-library/react";
-import MyTasksTable from "./MyTasksTable";
-import { Constants } from "../../../shared/utils/constants";
+import { MemoryRouter } from "react-router-dom";
+import MyTasksTable from './my-tasks-table';
 
-// Mock components from external libraries
-jest.mock("@ucl/ui-components", () => ({
-  Status: ({ label }: any) => <div data-testid="status">{label}</div>,
-  Table: ({ children }: any) => <table>{children}</table>,
-  TableBody: ({ children }: any) => <tbody>{children}</tbody>,
-  TableCell: ({ children }: any) => <td>{children}</td>,
-  TableContainer: ({ children }: any) => <div>{children}</div>,
-  TableHead: ({ children }: any) => <thead>{children}</thead>,
-  TableRow: ({ children }: any) => <tr>{children}</tr>,
-  Typography: ({ children }: any) => <div data-testid="typography">{children}</div>,
-}));
+describe('CustomTable Component', () => {
 
-jest.mock("../role-icons/role-icons", () => ({
-  __esModule: true,
-  default: ({ role, id }: any) => <div data-testid="action-column">{`${role}-${id}`}</div>,
-}));
+    const tableHeaders: any = [
+        "Customer Name",
+        "Gateway Customer ID",
+        "CIS Number",
+        "Customer Type",
+        "TMCC Case",
+        "Status",
+        "Actions"
+    ];
+    const tableBody: any = [{
+        "customerName":"Column Bank",
+        "gatewayCustomerId":"6a4ea94-b019-4a59-94b4-54291f72ccfc1",
+        "cisNumber": "1234567890",
+        "customerType":"Commercial",
+        "tmccCase": "34535",
+        "status" : "Pending Approval"
+    }];
+    const authRoles = {
+        "viewer": "view",
+        "creator": "edit",
+        "editor": "edit",
+        "approver": "approve"
+    };
 
-Constants.LABEL = { NO_RECORD: "No Record Found" };
-Constants.authStatusColorCodes = { approved: "green", pending_approval: "yellow" };
-
-describe("MyTasksTable Component", () => {
-  const tableHeaders = ["Customer Name", "Customer ID", "Status"];
-
-  const mockData = [
-    {
-      customerName: "Alice",
-      gatewayCustomerId: "CUST001",
-      customerConfig: JSON.stringify({ cisNumbers: ["CIS001"], customerType: "TypeA" }),
-      status: "approved",
-      tmccCase: "CASE123",
-    },
-    {
-      customerName: "Bob",
-      gatewayCustomerId: "CUST002",
-      customerConfig: JSON.stringify({ cisNumbers: ["CIS002"], customerType: "TypeB" }),
-      status: "pending_approval",
-      tmccCase: "CASE999",
-    },
-    {
-      customerName: "Charlie",
-      gatewayCustomerId: "CUST003",
-      customerConfig: JSON.stringify({ cisNumbers: ["CIS003"], customerType: "TypeC" }),
-      status: "rejected",
-      tmccCase: "CASE456",
-    },
-  ];
-
-  it("renders all table headers", () => {
-    render(<MyTasksTable tableHeaders={tableHeaders} tableBody={mockData} currentRole="admin" />);
-    tableHeaders.forEach((header) => {
-      expect(screen.getByText(header)).toBeInTheDocument();
+    it('renders MyTasksTable Component successfully for approver', () => {
+        const { baseElement }: any = render(
+            <MemoryRouter>
+                <MyTasksTable tableHeaders={tableHeaders} tableBody={tableBody}  authRoles={authRoles['approver']} currentRole='approve' />;
+            </MemoryRouter>);
+        expect(baseElement).toBeTruthy();
+    
     });
-  });
 
-  it("shows filtered data for approver role (only pending approval or approved)", () => {
-    render(<MyTasksTable tableHeaders={tableHeaders} tableBody={mockData} currentRole="approver" />);
-    expect(screen.getByText("Alice")).toBeInTheDocument();
-    expect(screen.getByText("Bob")).toBeInTheDocument();
-    expect(screen.queryByText("Charlie")).not.toBeInTheDocument(); // rejected should be filtered out
-  });
+    it('renders MyTasksTable all expected table headers for approver', () => {
+        render(
+            <MemoryRouter>
+                <MyTasksTable tableHeaders={tableHeaders} tableBody={[]}  authRoles={authRoles['approver']} currentRole='approve' />;
+            </MemoryRouter>);
 
-  it("renders ActionColumn for each data row when not viewer", () => {
-    render(<MyTasksTable tableHeaders={tableHeaders} tableBody={mockData} currentRole="admin" />);
-    const actionColumns = screen.getAllByTestId("action-column");
-    expect(actionColumns.length).toBe(mockData.length);
-  });
+        tableHeaders.forEach((header: any) => {
+            expect(screen.getByText(header)).toBeTruthy();
+        });
+    });
 
-  it("renders 'No Record Found' text for viewer role", () => {
-    render(<MyTasksTable tableHeaders={tableHeaders} tableBody={mockData} currentRole="viewer" />);
-    expect(screen.getByTestId("typography")).toHaveTextContent("No Record Found");
-  });
+    it('renders MyTasksTable all expected table body for approver', () => {
+        render(
+            <MemoryRouter>
+                <MyTasksTable tableHeaders={[]} tableBody={tableBody}  authRoles={authRoles['approver']} currentRole='approve' />;
+            </MemoryRouter>);
 
-  it("renders Status component with formatted label", () => {
-    render(<MyTasksTable tableHeaders={tableHeaders} tableBody={[mockData[0]]} currentRole="admin" />);
-    expect(screen.getByTestId("status")).toHaveTextContent("approved");
-  });
+        tableBody.forEach((row: any) => {
+            Object.values(row).forEach((cellValue: any) => {
+                expect(screen.getByText(cellValue)).toBeTruthy();
+            });
+        });
+    });
 
-  it("handles invalid JSON in customerConfig gracefully", () => {
-    const invalidData = [{ ...mockData[0], customerConfig: "{invalidJson}" }];
-    render(<MyTasksTable tableHeaders={tableHeaders} tableBody={invalidData} currentRole="admin" />);
-    expect(screen.getByText("Alice")).toBeInTheDocument(); // still renders row
-  });
+    it('renders MyTasksTable all expected table header and body for approver', () => {
+        render(
+            <MemoryRouter>
+                <MyTasksTable tableHeaders={tableHeaders} tableBody={tableBody}  authRoles={authRoles['approver']} currentRole='approve' />;
+            </MemoryRouter>);
+
+        tableHeaders.forEach((header: any) => {
+            expect(screen.getByText(header)).toBeTruthy();
+        });
+
+        tableBody.forEach((row: any) => {
+            Object.values(row).forEach((cellValue: any) => {
+                expect(screen.getByText(cellValue)).toBeTruthy();
+            });
+        });
+    });
+
+
+    it('renders MyTasksTable Component successfully for creator', () => {
+        const { baseElement }: any = render(
+            <MemoryRouter>
+                <MyTasksTable tableHeaders={tableHeaders} tableBody={tableBody}  authRoles={authRoles['creator']} currentRole='edit' />;
+            </MemoryRouter>);
+        expect(baseElement).toBeTruthy();
+    
+    });
+
+    it('renders MyTasksTable all expected table headers for creator', () => {
+        render(
+            <MemoryRouter>
+                <MyTasksTable tableHeaders={tableHeaders} tableBody={[]}  authRoles={authRoles['creator']} currentRole='edit' />;
+            </MemoryRouter>);
+
+        tableHeaders.forEach((header: any) => {
+            expect(screen.getByText(header)).toBeTruthy();
+        });
+    });
+
+    it('renders MyTasksTable all expected table body for creator', () => {
+        render(
+            <MemoryRouter>
+                <MyTasksTable tableHeaders={[]} tableBody={tableBody}  authRoles={authRoles['creator']} currentRole='edit' />;
+            </MemoryRouter>);
+
+        tableBody.forEach((row: any) => {
+            Object.values(row).forEach((cellValue: any) => {
+                expect(screen.getByText(cellValue)).toBeTruthy();
+            });
+        });
+    });
+
+    it('renders MyTasksTable all expected table header and body for creator', () => {
+        render(
+            <MemoryRouter>
+                <MyTasksTable tableHeaders={tableHeaders} tableBody={tableBody}  authRoles={authRoles['creator']} currentRole='edit' />;
+            </MemoryRouter>);
+
+        tableHeaders.forEach((header: any) => {
+            expect(screen.getByText(header)).toBeTruthy();
+        });
+
+        tableBody.forEach((row: any) => {
+            Object.values(row).forEach((cellValue: any) => {
+                expect(screen.getByText(cellValue)).toBeTruthy();
+            });
+        });
+    });
+
+    it('renders MyTasksTable Component successfully for editor', () => {
+        const { baseElement }: any = render(
+            <MemoryRouter>
+                <MyTasksTable tableHeaders={tableHeaders} tableBody={tableBody}  authRoles={authRoles['editor']} currentRole='edit' />;
+            </MemoryRouter>);
+        expect(baseElement).toBeTruthy();
+    });
+
+    it('renders MyTasksTable all expected table headers for editor', () => {
+        render(
+            <MemoryRouter>
+                <MyTasksTable tableHeaders={tableHeaders} tableBody={[]}  authRoles={authRoles['editor']} currentRole='edit' />;
+            </MemoryRouter>);
+
+        tableHeaders.forEach((header: any) => {
+            expect(screen.getByText(header)).toBeTruthy();
+        });
+    });
+
+    it('renders MyTasksTable all expected table body for editor', () => {
+        render(
+            <MemoryRouter>
+                <MyTasksTable tableHeaders={[]} tableBody={tableBody}  authRoles={authRoles['editor']} currentRole='edit' />;
+            </MemoryRouter>);
+
+        tableBody.forEach((row: any) => {
+            Object.values(row).forEach((cellValue: any) => {
+                expect(screen.getByText(cellValue)).toBeTruthy();
+            });
+        });
+    });
+
+    it('renders MyTasksTable all expected table header and body for editor', () => {
+        render(
+            <MemoryRouter>
+                <MyTasksTable tableHeaders={tableHeaders} tableBody={tableBody}  authRoles={authRoles['editor']} currentRole='edit' />;
+            </MemoryRouter>);
+
+        tableHeaders.forEach((header: any) => {
+            expect(screen.getByText(header)).toBeTruthy();
+        });
+
+        tableBody.forEach((row: any) => {
+            Object.values(row).forEach((cellValue: any) => {
+                expect(screen.getByText(cellValue)).toBeTruthy();
+            });
+        });
+    });
+
+    it('renders MyTasksTable Component successfully for viewer', () => {
+        const { baseElement }: any = render(
+            <MemoryRouter>
+                <MyTasksTable tableHeaders={tableHeaders} tableBody={tableBody}  authRoles={authRoles['viewer']} currentRole='view' />;
+            </MemoryRouter>);
+        expect(baseElement).toBeTruthy();
+    });
+
+    it('renders MyTasksTable all expected table headers for viewer', () => {
+        render(
+            <MemoryRouter>
+                <MyTasksTable tableHeaders={tableHeaders} tableBody={[]}  authRoles={authRoles['viewer']} currentRole='view' />;
+            </MemoryRouter>);
+
+        tableHeaders.forEach((header: any) => {
+            expect(screen.getByText(header)).toBeTruthy();
+        });
+    });
+
 });
