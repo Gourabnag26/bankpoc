@@ -53,7 +53,7 @@ describe("MyTasksTable Component", () => {
     },
   ];
 
-  // ✅ Test 1: Renders all table headers
+  // ✅ Test 1: Renders all headers
   it("renders all table headers", () => {
     render(
       <MyTasksTable
@@ -64,11 +64,12 @@ describe("MyTasksTable Component", () => {
     );
 
     tableHeaders.forEach((header) => {
-      expect(screen.getByText(header)).toBeInTheDocument();
+      // if getByText doesn't throw, header exists
+      screen.getByText(header);
     });
   });
 
-  // ✅ Test 2: Filters correctly for approver role
+  // ✅ Test 2: Approver role filter
   it("shows only approved and pending approval for approver role", () => {
     render(
       <MyTasksTable
@@ -78,13 +79,15 @@ describe("MyTasksTable Component", () => {
       />
     );
 
-    expect(screen.getByText("Alice")).toBeInTheDocument(); // approved
-    expect(screen.getByText("Bob")).toBeInTheDocument(); // pending approval
-    expect(screen.queryByText("Charlie")).not.toBeInTheDocument(); // rejected filtered out
+    screen.getByText("Alice"); // approved
+    screen.getByText("Bob"); // pending approval
+
+    const charlie = screen.queryByText("Charlie");
+    expect(charlie).toBeNull(); // rejected should not be shown
   });
 
-  // ✅ Test 3: Shows 'No Record Found' for viewer
-  it("renders No Record Found for viewer", () => {
+  // ✅ Test 3: Viewer role message
+  it("renders No Record Found for viewer role", () => {
     render(
       <MyTasksTable
         tableHeaders={tableHeaders}
@@ -93,15 +96,15 @@ describe("MyTasksTable Component", () => {
       />
     );
 
-    expect(screen.getByText(Constants.LABEL.NO_RECORD)).toBeInTheDocument();
+    screen.getByText(Constants.LABEL.NO_RECORD);
   });
 
-  // ✅ Test 4: Handles invalid JSON gracefully
-  it("handles invalid customerConfig JSON without crashing", () => {
+  // ✅ Test 4: Invalid JSON safety
+  it("handles invalid customerConfig JSON safely", () => {
     const invalidData = [
       {
         ...mockTableBody[0],
-        customerConfig: "{invalidJson}",
+        customerConfig: "{invalidJSON}",
       },
     ];
 
@@ -113,6 +116,6 @@ describe("MyTasksTable Component", () => {
       />
     );
 
-    expect(screen.getByText("Alice")).toBeInTheDocument(); // still renders
+    screen.getByText("Alice"); // still renders safely
   });
 });
