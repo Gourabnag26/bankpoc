@@ -12,7 +12,7 @@ import ActionColumn from '../role-icons/role-icons';
 import { Constants } from '../../../shared/utils/constants';
 
 const MyTasksTable = ({ tableHeaders, tableBody, currentRole }: any) => {
-  // Normalize and filter data for approvers
+  //approver filter
   const filteredData =
     tableBody &&
     tableBody.filter((item: any) => {
@@ -40,7 +40,6 @@ const MyTasksTable = ({ tableHeaders, tableBody, currentRole }: any) => {
             {currentRole !== 'viewer' &&
               filteredData &&
               filteredData.map((data: any) => {
-                // Parse customerConfig safely
                 let customerConfig: any = {};
                 try {
                   customerConfig =
@@ -64,9 +63,7 @@ const MyTasksTable = ({ tableHeaders, tableBody, currentRole }: any) => {
                     <TableCell>
                       {customerConfig.cisNumbers?.[0] || '-'}
                     </TableCell>
-                    <TableCell>
-                      {customerConfig.customerType || '-'}
-                    </TableCell>
+                    <TableCell>{customerConfig.customerType || '-'}</TableCell>
                     <TableCell>{data.tmccCase || '-'}</TableCell>
                     <TableCell>
                       <Status
@@ -79,7 +76,7 @@ const MyTasksTable = ({ tableHeaders, tableBody, currentRole }: any) => {
                       <ActionColumn
                         role={currentRole}
                         table="My Tasks"
-                        status={data.status}
+                        status={data.status.toLowerCase().replaceAll("_"," ")}
                         id={data.gatewayCustomerId}
                       />
                     </TableCell>
