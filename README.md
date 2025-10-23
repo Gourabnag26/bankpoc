@@ -1,77 +1,163 @@
-// Add this helper inside your component
-const updateAccountProducts = (category: keyof ApiSelectionState, selectedIds: string[]) => {
-  setAccountState(prev => {
-    let products = [...(prev.products || [])];
+import React, { useEffect } from 'react';
+import { useOktaAuth } from '@okta/okta-react';
+import { toRelativeUrl } from '@okta/okta-auth-js';
+import { Outlet } from 'react-router-dom';
+import { PageSpinner } from '@ucl/ui-components';
 
-    if (category === 'general') {
-      const hasSelection = selectedIds.includes('acc_balance');
-      const existing = products.find(p => p.name === 'ACCOUNT_BALANCE_API');
 
-      if (hasSelection && !existing) {
-        products.push({
-          id: null,
-          name: 'ACCOUNT_BALANCE_API',
-          resources: [{ name: 'RETRIEVE_ACCOUNT_BALANCE', enabled: true }],
-          paymentRails: null,
-        });
-      } else if (!hasSelection && existing) {
-        products = products.filter(p => p.name !== 'ACCOUNT_BALANCE_API');
-      }
-    } else {
-      const railNameMap = { rtp: 'RTP', fednow: 'FEDNOW', wires: 'WIRES' };
-      const railName = railNameMap[category];
+export const SecureRoute: React.FC = () => {
 
-      let ipaProduct = products.find(p => p.name === 'INSTANT_PAYMENTS_API');
-      if (!ipaProduct && selectedIds.length > 0) {
-        ipaProduct = { id: null, name: 'INSTANT_PAYMENTS_API', resources: [], paymentRails: [] };
-        products.push(ipaProduct);
-      }
+  const { oktaAuth, authState } = useOktaAuth();
 
-      if (ipaProduct) {
-        if (selectedIds.length > 0 && !ipaProduct.resources.some(r => r.name === 'CREATE_CREDIT_TRANSFER')) {
-          ipaProduct.resources.push({ name: 'CREATE_CREDIT_TRANSFER', enabled: true });
-        }
-
-        ipaProduct.paymentRails = ipaProduct.paymentRails || [];
-        if (selectedIds.length > 0) {
-          if (!ipaProduct.paymentRails.some(r => r.name === railName)) {
-            ipaProduct.paymentRails.push({ name: railName, enabled: true });
-          }
-        } else {
-          ipaProduct.paymentRails = ipaProduct.paymentRails.filter(r => r.name !== railName);
-        }
-
-        if (ipaProduct.paymentRails.length === 0 && ipaProduct.resources.length === 0) {
-          products = products.filter(p => p.name !== 'INSTANT_PAYMENTS_API');
-        }
-      }
+  useEffect(() => {
+    if (!authState) {
+      return;
     }
 
-    return { ...prev, products };
-  });
+    if (!authState?.isAuthenticated) {
+      const originalUri = toRelativeUrl(window.location.href, window.location.origin);
+      oktaAuth.setOriginalUri(originalUri);
+      oktaAuth.signInWithRedirect();
+    }
+    
+  }, [oktaAuth, authState?.isAuthenticated, authState]);
+
+  if (!authState || !authState?.isAuthenticated) {
+    return (
+      <PageSpinner
+        isLoading
+        spinnerTestId="loading-spinner"
+      />
+    );
+  }
+
+  return (<Outlet />);
 };
 
-// Update handleChange to also update accountState
-const handleChange = (target: keyof ApiSelectionState) => (value: string[]) => {
-  setApiSelection(prev => ({
-    ...prev,
-    [target]: { ...prev[target], selectedValue: value }
-  }));
-  updateAccountProducts(target, value);
+
+
+
+
+import * as React from 'react';
+import { Router } from '../shared/components/router/router';
+import { IRouter } from '../shared/model';
+import { IPARoutes } from '../shared/routes';
+import PageLayout from './pages/page-layout';
+import PageNotFound from './pages/page-not-found';
+import CustomerSearch from './pages/customer-search';
+import CustomerProfile from './pages/customer-profile';
+import MyTasks from './pages/my-tasks';
+import { useLocation } from 'react-router-dom';
+import { Security } from '@okta/okta-react';
+import { useOktaAuthService } from 'shared/hooks/use-okta-authentication';
+import {SecureRoute} from '../shared/components/router/secure-route/secure-route'
+
+export const scene: IRouter[] = [
+  {
+    element: <SecureRoute /> ,
+    path: IPARoutes.myTasks,
+    title: 'layout',
+    childRoutes: [
+      {
+        element: <MyTasks />,
+        path: IPARoutes.myTasks,
+        title: 'mytask',
+      },
+      {
+        element: <CustomerSearch/>,
+        path: IPARoutes.customerSearch,
+        title: 'customersearch',
+      },
+      {
+        element: <CustomerProfile />,
+        path:  IPARoutes.customerProfile,
+        title: 'Customer-profile',
+      },
+    ],
+  },
+  
+  {
+    element: <PageNotFound />,
+    path: '*',
+    title: '404page',
+  },
+];
+
+export function AppBanner() {
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const role= searchParams.get("role");
+  const mode= searchParams.get("mode");
+
+  const titleMap: Record <string, string> = {
+    [IPARoutes.error]: "Error",
+    [IPARoutes.myTasks]: 'My Tasks' ,
+    [IPARoutes.customerSearch]: "Customer Search",
+    [IPARoutes.customerProfile]: (IPARoutes.customerProfile === "/customer-profile" && role ==="approver" && mode === "edit") ? `Customer Profile - Approval View` : IPARoutes.customerProfile === "/customer-profile" ? `Customer Profile - ${mode?.toUpperCase() || 'VIEW'}` : '',
+    //Add path after creation of new page to update banner
+  }
+  return titleMap;
+}
+
+const IPAPages: React.FC = () => {
+  const { getOktaConfig, restoreOktaOriginalUri } = useOktaAuthService();
+
+  return (
+    <Security
+      oktaAuth={getOktaConfig()}
+      restoreOriginalUri={restoreOktaOriginalUri}
+    >
+      <PageLayout>
+        <Router pages={scene} />
+      </PageLayout>
+      
+    </Security>
+  );
 };
 
-// Update handleSelectAllChange to sync accountState
-const handleSelectAllChange = (checked: boolean) => {
-  setApiSelection(prev => {
-    const newSelection = { ...prev };
-    Object.keys(newSelection).forEach(key => {
-      const api = newSelection[key as keyof ApiSelectionState];
-      if (!api.disabled) {
-        api.selectedValue = checked ? api.options.map(o => o.id) : [];
-        updateAccountProducts(key as keyof ApiSelectionState, api.selectedValue); // sync
-      }
-    });
-    return newSelection;
-  });
-  setIsAllSelected(checked);
+export default IPAPages;
+
+
+import { Outlet } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
+import { Banner } from '../../components/banner/banner';
+import TopNavigation from '../../components/top-navigation/top-navigation';
+import { AppBanner } from '../../scene';
+import { CustomerProvider } from '../../context/customer-context';
+import './page-layout.css';
+
+export interface PageLayoutProps {
+  children?: React.ReactNode;
+}
+
+export const PageLayout = (props: PageLayoutProps) => {
+  const { pathname } = useLocation();
+  const appBanner = AppBanner();
+
+  let bannerTitle = '';
+
+  for (const [key, titleValue] of Object.entries(appBanner)) {
+    if (pathname === '/' && key === '/') {
+      bannerTitle = titleValue;
+    }
+    if (pathname === '/customer-search' && key === '/customer-search') {
+      bannerTitle = titleValue;
+    }
+    if (pathname === '/customer-profile/' && key === '/customer-profile') {
+      bannerTitle = titleValue;
+    }
+  }
+
+  return (
+    <CustomerProvider>
+      <TopNavigation />
+      <Banner title={bannerTitle} />
+      <div className="page-layout">
+        <Outlet />
+      </div>
+    </CustomerProvider>
+  );
 };
+
+
+
