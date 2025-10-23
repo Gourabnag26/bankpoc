@@ -269,3 +269,314 @@ export const CustomerProfile = () => {
     </Box>
   );
 };
+
+
+
+
+{
+    "gatewayCustomerId": "755387fb-e20f-4b32-b99b-9c6f242a021e",
+    "name": "Charizard02",
+    "cisNumbers": [
+        "2999921105"
+    ],
+    "enabled": true,
+    "customerSettings": {
+        "transactionLimit": 10000,
+        "cumulativeTransactionLimit": null,
+        "processingWindow": null,
+        "processingWindowTimezone": null
+    },
+    "customerType": "COMMERCIAL",
+    "virtualAcctCustomer": true,
+    "demoCustomer": false,
+    "customerAccounts": [
+        {
+            "number": "7857200085",
+            "name": "5setHoganAccount9",
+            "routingNumber": "072000096",
+            "bankCode": "10002",
+            "cisNumbers": [
+                "2999921105"
+            ],
+            "accountSettings": {
+                "transactionLimit": null,
+                "cumulativeTransactionLimit": null
+            },
+            "billingAccount": false,
+            "enabled": true,
+            "products": [
+                {
+                    "id": null,
+                    "name": "INSTANT_PAYMENTS_API",
+                    "friendlyName": "Instant Payments API",
+                    "shortName": "IPA",
+                    "description": "Provides various resources to manage instant payments api",
+                    "productSettings": {},
+                    "enabled": true,
+                    "billable": true,
+                    "resources": [
+                        {
+                            "name": "CREATE_CREDIT_TRANSFER",
+                            "friendlyName": "Create Credit Transfer",
+                            "description": "Help to initiate credit transfer request",
+                            "enabled": true,
+                            "billable": true
+                        },
+                        {
+                            "name": "RETRIEVE_CREDIT_TRANSFER",
+                            "friendlyName": "Retrieve Credit Transfer",
+                            "description": "Help to retrieve the status of the credit transfer request",
+                            "enabled": true,
+                            "billable": true
+                        }
+                    ],
+                    "paymentRails": [
+                        {
+                            "name": "RTP",
+                            "friendlyName": null,
+                            "description": null,
+                            "paymentRailSettings": {
+                                "duplicateCheckDuration": 0,
+                                "allowedCreditAccountList": [
+                                    {
+                                        "accountNumber": "84324377",
+                                        "routingNumber": "072000096"
+                                    },
+                                    {
+                                        "accountNumber": "943243277",
+                                        "routingNumber": "121137522"
+                                    }
+                                ]
+                            },
+                            "enabled": true,
+                            "billable": true
+                        },
+                        {
+                            "name": "FEDNOW",
+                            "friendlyName": null,
+                            "description": null,
+                            "paymentRailSettings": {
+                                "duplicateCheckDuration": 0
+                            },
+                            "enabled": true,
+                            "billable": true
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "number": "7857200086",
+            "name": "5setHoganAccount9",
+            "routingNumber": "072000096",
+            "bankCode": "10002",
+            "cisNumbers": [
+                "2999921105"
+            ],
+            "accountSettings": {
+                "transactionLimit": null,
+                "cumulativeTransactionLimit": null
+            },
+            "billingAccount": false,
+            "enabled": true,
+            "products": [
+                {
+                    "id": null,
+                    "name": "INSTANT_PAYMENTS_API",
+                    "friendlyName": "Instant Payments API",
+                    "shortName": "IPA",
+                    "description": "Provides various resources to manage instant payments api",
+                    "productSettings": {},
+                    "enabled": true,
+                    "billable": true,
+                    "resources": [
+                        {
+                            "name": "CREATE_CREDIT_TRANSFER",
+                            "friendlyName": "Create Credit Transfer",
+                            "description": "Help to initiate credit transfer request",
+                            "enabled": true,
+                            "billable": true
+                        },
+                        {
+                            "name": "RETRIEVE_CREDIT_TRANSFER",
+                            "friendlyName": "Retrieve Credit Transfer",
+                            "description": "Help to retrieve the status of the credit transfer request",
+                            "enabled": true,
+                            "billable": true
+                        }
+                    ],
+                    "paymentRails": [
+                        {
+                            "name": "RTP",
+                            "friendlyName": null,
+                            "description": null,
+                            "paymentRailSettings": {
+                                "duplicateCheckDuration": 0,
+                                "allowedCreditAccountList": [
+                                    {
+                                        "accountNumber": "84324377",
+                                        "routingNumber": "072000096"
+                                    },
+                                    {
+                                        "accountNumber": "943243277",
+                                        "routingNumber": "121137522"
+                                    }
+                                ]
+                            },
+                            "enabled": true,
+                            "billable": true
+                        },
+                        {
+                            "name": "FEDNOW",
+                            "friendlyName": null,
+                            "description": null,
+                            "paymentRailSettings": {
+                                "duplicateCheckDuration": 0
+                            },
+                            "enabled": true,
+                            "billable": true
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "number": "7857200087",
+            "name": "5setHoganAccount9",
+            "routingNumber": "072000096",
+            "bankCode": "10002",
+            "cisNumbers": [
+                "2999921105"
+            ],
+            "accountSettings": {
+                "transactionLimit": null,
+                "cumulativeTransactionLimit": null
+            },
+            "billingAccount": false,
+            "enabled": true,
+            "products": [
+                {
+                    "id": null,
+                    "name": "INSTANT_PAYMENTS_API",
+                    "friendlyName": "Instant Payments API",
+                    "shortName": "IPA",
+                    "description": "Provides various resources to manage instant payments api",
+                    "productSettings": {},
+                    "enabled": true,
+                    "billable": true,
+                    "resources": [
+                        {
+                            "name": "CREATE_CREDIT_TRANSFER",
+                            "friendlyName": "Create Credit Transfer",
+                            "description": "Help to initiate credit transfer request",
+                            "enabled": true,
+                            "billable": true
+                        },
+                        {
+                            "name": "RETRIEVE_CREDIT_TRANSFER",
+                            "friendlyName": "Retrieve Credit Transfer",
+                            "description": "Help to retrieve the status of the credit transfer request",
+                            "enabled": true,
+                            "billable": true
+                        }
+                    ],
+                    "paymentRails": [
+                        {
+                            "name": "RTP",
+                            "friendlyName": null,
+                            "description": null,
+                            "paymentRailSettings": {
+                                "duplicateCheckDuration": 0,
+                                "allowedCreditAccountList": [
+                                    {
+                                        "accountNumber": "84324377",
+                                        "routingNumber": "072000096"
+                                    },
+                                    {
+                                        "accountNumber": "943243277",
+                                        "routingNumber": "121137522"
+                                    }
+                                ]
+                            },
+                            "enabled": true,
+                            "billable": true
+                        },
+                        {
+                            "name": "FEDNOW",
+                            "friendlyName": null,
+                            "description": null,
+                            "paymentRailSettings": {
+                                "duplicateCheckDuration": 0
+                            },
+                            "enabled": true,
+                            "billable": true
+                        }
+                    ]
+                }
+            ]
+        }
+    ],
+    "customerProducts": [
+        {
+            "id": null,
+            "name": "INSTANT_PAYMENTS_API",
+            "friendlyName": "Instant Payments API",
+            "shortName": "IPA",
+            "description": "Provides various resources to manage instant payments api",
+            "productSettings": {},
+            "enabled": true,
+            "billable": true,
+            "resources": [
+                {
+                    "name": "CREATE_CREDIT_TRANSFER",
+                    "friendlyName": "Create Credit Transfer",
+                    "description": "Help to initiate credit transfer request",
+                    "enabled": true,
+                    "billable": true
+                },
+                {
+                    "name": "RETRIEVE_CREDIT_TRANSFER",
+                    "friendlyName": "Retrieve Credit Transfer",
+                    "description": "Help to retrieve the status of the credit transfer request",
+                    "enabled": true,
+                    "billable": true
+                }
+            ],
+            "paymentRails": [
+                {
+                    "name": "RTP",
+                    "friendlyName": null,
+                    "description": null,
+                    "paymentRailSettings": {
+                        "duplicateCheckDuration": 0,
+                        "allowedCreditAccountList": [
+                            {
+                                "accountNumber": "84324377",
+                                "routingNumber": "072000096"
+                            },
+                            {
+                                "accountNumber": "943243277",
+                                "routingNumber": "121137522"
+                            }
+                        ]
+                    },
+                    "enabled": true,
+                    "billable": true
+                },
+                {
+                    "name": "FEDNOW",
+                    "friendlyName": null,
+                    "description": null,
+                    "paymentRailSettings": {
+                        "duplicateCheckDuration": 0
+                    },
+                    "enabled": true,
+                    "billable": true
+                }
+            ]
+        }
+    ],
+    "billingCustomerId": "IPABILL234",
+    "createdBy": "CreateCustomerAPI",
+    "customerContacts": []
+}
