@@ -7,8 +7,11 @@ import '../../customer-profile.css';
 
 const AccountPreference = ({ customer, setCustomer, disabled }: IcustomerProps) => {
   const [accountPopup, setAccountPopup] = useState(false);
+  const [selectedAccount, setSelectedAccount] = useState<any>(null);
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+  const [isView, setIsView] = useState(false);
 
-
+  // Add a new account
   const handleAddAccount = (newAccount: any) => {
     setCustomer((prev) => ({
       ...prev,
@@ -17,21 +20,31 @@ const AccountPreference = ({ customer, setCustomer, disabled }: IcustomerProps) 
     setAccountPopup(false);
   };
 
-
+  // Update an existing account
   const handleUpdateAccount = (index: number, updatedAccount: any) => {
     setCustomer((prev) => {
       const accounts = [...(prev.customerAccounts || [])];
       accounts[index] = { ...accounts[index], ...updatedAccount };
       return { ...prev, customerAccounts: accounts };
     });
+    setAccountPopup(false);
   };
 
+  // Delete an account
   const handleDeleteAccount = (index: number) => {
     setCustomer((prev) => {
       const accounts = [...(prev.customerAccounts || [])];
       accounts.splice(index, 1);
       return { ...prev, customerAccounts: accounts };
     });
+  };
+
+  // Open the popup for Add or Edit/View
+  const openPopup = (account: any = null, index: number | null = null, view = false) => {
+    setSelectedAccount(account);
+    setSelectedIndex(index);
+    setIsView(view);
+    setAccountPopup(true);
   };
 
   return (
@@ -47,16 +60,25 @@ const AccountPreference = ({ customer, setCustomer, disabled }: IcustomerProps) 
             className="button"
             variant="primary"
             children="Add Account"
-            onClick={() => setAccountPopup(true)}
+            onClick={() => openPopup()}
           />
         )}
 
+        {/* Account Popup */}
         <Dialog
           dialogContent={
             <AccountPopup
-              onSave={handleAddAccount} 
+              account={selectedAccount}
+              disabled={isView || disabled}
+              customer={customer}
+              onSave={(data) => {
+                if (selectedIndex !== null) {
+                  handleUpdateAccount(selectedIndex, data);
+                } else {
+                  handleAddAccount(data);
+                }
+              }}
               onCancel={() => setAccountPopup(false)}
-              disabled={disabled}
             />
           }
           dialogTitle="Account Access & Preferences"
@@ -67,13 +89,15 @@ const AccountPreference = ({ customer, setCustomer, disabled }: IcustomerProps) 
         />
       </Box>
 
-    
+      {/* Account Table */}
       <AccountSearchTable
         customer={customer}
         setCustomer={setCustomer}
         disabled={disabled}
-        onUpdateAccount={handleUpdateAccount}
-        onDeleteAccount={handleDeleteAccount}
+        onUpdateAccount={(index: number, data: any) => handleUpdateAccount(index, data)}
+        onDeleteAccount={(index: number) => handleDeleteAccount(index)}
+        onEditAccount={(account: any, index: number) => openPopup(account, index, false)}
+        onViewAccount={(account: any, index: number) => openPopup(account, index, true)}
       />
     </Box>
   );
