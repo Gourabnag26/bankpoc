@@ -1,192 +1,82 @@
-import React, { useMemo, useState } from 'react';
-import '../../pages/customer-profile/customer-profile.css';
-import {
-  Box,
-  Button,
-  DeleteIcon,
-  Dialog,
-  EditIcon,
-  Input,
-  ShowIcon,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Tooltip,
-} from '@ucl/ui-components';
-import { IcustomerProps } from '../../pages/customer-profile/customer-profile';
-import AccountPopup from '../account-popup/account-popup';
+import React, { useState } from 'react';
+import { IcustomerProps } from '../../customer-profile';
+import { Box, Button, Dialog, Typography } from '@ucl/ui-components';
+import AccountSearchTable from '../../../../components/account-table/account-table';
+import AccountPopup from '../../../../components/account-popup/account-popup';
+import '../../customer-profile.css';
 
-interface AccountSearchTableProps extends IcustomerProps {
-  onUpdateAccount?: (index: number, updated: any) => void;
-  onDeleteAccount?: (index: number) => void;
-}
-
-const AccountSearchTable = ({
-  customer,
-  setCustomer,
-  disabled,
-  onUpdateAccount,
-  onDeleteAccount,
-}: AccountSearchTableProps) => {
-  const [accountName, setAccountName] = useState('');
-  const [accountNumber, setAccountNumber] = useState('');
+const AccountPreference = ({ customer, setCustomer, disabled }: IcustomerProps) => {
   const [accountPopup, setAccountPopup] = useState(false);
-  const [isView, setIsView] = useState(false);
-  const [account, setAccount] = useState<any>({});
-  const [selectedIndex, setSelectedIndex] = useState<number>(-1);
-  const [filters, setFilters] = useState({
-    accountName: '',
-    accountNumber: '',
-  });
 
-  const setAppliedFilter = (obj: any) => setFilters(obj);
 
-  const tableHeaders: any = ['Account Name', 'Account Number', 'Routing Number', 'Action'];
-
-  const FilteredData = useMemo(() => {
-    const data: any = customer.customerAccounts || [];
-    return data.filter((row: any) => {
-      return (
-        (!filters.accountName ||
-          row.name.toLowerCase().includes(filters.accountName.toLowerCase())) &&
-        (!filters.accountNumber ||
-          row.number.toLowerCase().includes(filters.accountNumber.toLowerCase()))
-      );
-    });
-  }, [filters, customer.customerAccounts]);
-
-  const handleSave = (updatedAccount: any) => {
-    if (selectedIndex >= 0 && onUpdateAccount) {
-      onUpdateAccount(selectedIndex, updatedAccount);
-    } else if (setCustomer) {
-      // Add new account if needed
-      setCustomer((prev: any) => ({
-        ...prev,
-        customerAccounts: [...(prev.customerAccounts || []), updatedAccount],
-      }));
-    }
+  const handleAddAccount = (newAccount: any) => {
+    setCustomer((prev) => ({
+      ...prev,
+      customerAccounts: [...(prev.customerAccounts || []), newAccount],
+    }));
     setAccountPopup(false);
   };
 
-  const handleDelete = (index: number) => {
-    if (onDeleteAccount) {
-      onDeleteAccount(index);
-    }
+
+  const handleUpdateAccount = (index: number, updatedAccount: any) => {
+    setCustomer((prev) => {
+      const accounts = [...(prev.customerAccounts || [])];
+      accounts[index] = { ...accounts[index], ...updatedAccount };
+      return { ...prev, customerAccounts: accounts };
+    });
+  };
+
+  const handleDeleteAccount = (index: number) => {
+    setCustomer((prev) => {
+      const accounts = [...(prev.customerAccounts || [])];
+      accounts.splice(index, 1);
+      return { ...prev, customerAccounts: accounts };
+    });
   };
 
   return (
-    <Box sx={{ marginTop: '30px' }}>
-      {/* Filters */}
-      <Box className="main-container">
-        <Input
-          titleLabel="Account Name"
-          value={accountName}
-          className="main-input"
-          onChange={(e) => setAccountName(e.target.value)}
-        />
-        <Input
-          titleLabel="Account Number"
-          value={accountNumber}
-          className="main-input"
-          onChange={(e) => setAccountNumber(e.target.value)}
-        />
-        <Button
-          variant="primary"
-          className="button"
-          onClick={() =>
-            setAppliedFilter({ accountName: accountName, accountNumber: accountNumber })
+    <Box className="section">
+      <Box className="group-head">
+        <Typography variant="h3" className="main-header" fontStyle="italic">
+          Account Access & Preferences
+        </Typography>
+
+        {/* Add Account Button */}
+        {!disabled && (
+          <Button
+            className="button"
+            variant="primary"
+            children="Add Account"
+            onClick={() => setAccountPopup(true)}
+          />
+        )}
+
+        <Dialog
+          dialogContent={
+            <AccountPopup
+              onSave={handleAddAccount} 
+              onCancel={() => setAccountPopup(false)}
+              disabled={disabled}
+            />
           }
-        >
-          Search
-        </Button>
+          dialogTitle="Account Access & Preferences"
+          open={accountPopup}
+          onClose={() => setAccountPopup(false)}
+          fullWidth
+          maxWidth="md"
+        />
       </Box>
 
-      {/* Table */}
-      <TableContainer>
-        <Table>
-          <TableHead>
-            <TableRow>
-              {tableHeaders.map((head: any, key: any) => (
-                <TableCell key={key}>{head}</TableCell>
-              ))}
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {FilteredData?.map((data: any, idx: number) => (
-              <TableRow key={data.account_name || idx}>
-                <TableCell>{data.name}</TableCell>
-                <TableCell>{data.number}</TableCell>
-                <TableCell>{data.routingNumber}</TableCell>
-                <TableCell style={{ display: 'flex', gap: '5px' }}>
-                  <Tooltip
-                    title="View"
-                    onClick={() => {
-                      setAccountPopup(true);
-                      setAccount(data);
-                      setIsView(true);
-                      setSelectedIndex(idx);
-                    }}
-                  >
-                    <span>
-                      <ShowIcon />
-                    </span>
-                  </Tooltip>
-
-                  {!disabled && (
-                    <>
-                      <Tooltip
-                        title="Edit"
-                        onClick={() => {
-                          setAccountPopup(true);
-                          setAccount(data);
-                          setIsView(false);
-                          setSelectedIndex(idx);
-                        }}
-                      >
-                        <span>
-                          <EditIcon />
-                        </span>
-                      </Tooltip>
-
-                      <Tooltip
-                        title="Delete"
-                        onClick={() => handleDelete(idx)}
-                      >
-                        <span>
-                          <DeleteIcon />
-                        </span>
-                      </Tooltip>
-                    </>
-                  )}
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
-
-      {/* Account Popup */}
-      <Dialog
-        dialogContent={
-          <AccountPopup
-            disabled={isView || disabled}
-            account={account}
-            customer={customer}
-            onSave={handleSave}
-            onCancel={() => setAccountPopup(false)}
-          />
-        }
-        dialogTitle="Account Access & Preferences"
-        open={accountPopup}
-        onClose={() => setAccountPopup(false)}
-        fullWidth
-        maxWidth="md"
+    
+      <AccountSearchTable
+        customer={customer}
+        setCustomer={setCustomer}
+        disabled={disabled}
+        onUpdateAccount={handleUpdateAccount}
+        onDeleteAccount={handleDeleteAccount}
       />
     </Box>
   );
 };
 
-export default AccountSearchTable;
+export default AccountPreference;
