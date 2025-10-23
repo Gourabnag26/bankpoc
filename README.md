@@ -1,99 +1,72 @@
 import React from 'react';
 import { IcustomerProps } from '../../customer-profile';
-import { Box, Input, Typography } from '@ucl/ui-components';
-import RadioGroup from '../../../../components/radio-group/radio-group';
+import { Box, Input, Typography, Select } from '@ucl/ui-components';
 import '../../customer-profile.css';
-
-const TechnicalContact = ({ customer, setCustomer, disabled }: IcustomerProps) => {
-  const contactIndex = 1; // Technical contact = second item in customerContacts
-  const existingContact = customer?.customerContacts?.[contactIndex] || {};
-
-  const handleContactChange = (field: string, value: string) => {
-    setCustomer((prev) => {
-      const contacts = [...(prev.customerContacts || [])];
-
-      // Ensure there's a contact object at this index
-      if (!contacts[contactIndex]) {
-        contacts[contactIndex] = {
-          contactName: '',
-          contactTitle: '',
-          contactPhone: '',
-          contactPhoneType: '',
-          contactEmail: '',
-          contactPreferredType: '',
-          enabled: true,
-        };
-      }
-
-      contacts[contactIndex] = {
-        ...contacts[contactIndex],
-        [field]: value,
-      };
-
-      return {
-        ...prev,
-        customerContacts: contacts,
-      };
-    });
-  };
-
+import { useState } from 'react';
+import TimeInput from '../../../../components/time-input/time-input';
+const TransactionLimit = ({
+  customer,
+  setCustomer,
+  disabled,
+}: IcustomerProps) => {
+  const [startTime, setStartTime] = useState(
+    customer?.customerSettings?.processingWindow?.split('-')[0] || ''
+  );
+  const [endTime, setEndTime] = useState(
+    customer?.customerSettings?.processingWindow?.split('-')[1] || ''
+  );
   return (
     <Box className="section">
       <Typography variant="h3" className="main-header" fontStyle="italic">
-        Technical Contact
+        Limits
       </Typography>
-
       <Box className="sub-section">
-        {/* Name & Phone */}
         <Box className="main-container">
           <Input
             className="main-input"
-            titleLabel="Name"
-            placeholder="Name"
-            value={existingContact?.contactName || ''}
+            titleLabel="Transaction Limit"
+            value={customer?.customerSettings?.transactionLimit}
+            placeholder="Transaction Limit"
             disabled={disabled}
-            onChange={(e: any) => handleContactChange('contactName', e.target.value)}
           />
-
           <Input
             className="main-input"
-            titleLabel="Phone"
-            placeholder="Phone Number"
-            value={existingContact?.contactPhone || ''}
+            titleLabel="Daily Limit"
+            placeholder="Daily Limit"
             disabled={disabled}
-            onChange={(e: any) => handleContactChange('contactPhone', e.target.value)}
           />
         </Box>
-
-        {/* Email */}
         <Box className="main-container">
-          <Input
-            className="main-input"
-            titleLabel="Email"
-            placeholder="Email"
-            value={existingContact?.contactEmail || ''}
-            disabled={disabled}
-            onChange={(e: any) => handleContactChange('contactEmail', e.target.value)}
-          />
-        </Box>
-
-        {/* Preferred Method */}
-        <Box className="main-checkgroup">
-          <Typography variant="body1">Preferred Method :</Typography>
-          <RadioGroup
-            name="contactMethodTechnical"
-            selectedValue={existingContact?.contactPreferredType || 'Email'}
-            disabled={disabled}
-            options={[
-              { label: 'Email', value: 'Email' },
-              { label: 'Phone', value: 'Phone' },
-            ]}
-            onChange={(val: string) => handleContactChange('contactPreferredType', val)}
-          />
+          <Box>
+            <Typography className="sub-header">Processing Window</Typography>
+            <Box className="time-container">
+              <TimeInput
+                time={startTime}
+                setTime={setStartTime}
+                disabled={disabled}
+              />
+              <span> - </span>
+              <TimeInput
+                time={endTime}
+                setTime={setEndTime}
+                disabled={disabled}
+              />
+              <Select
+                className="time-input"
+                value={customer?.customerSettings?.processingWindowTimezone || "GMT"}
+                options={[
+                  { key: 'GMT', value: 'GMT', text: 'GMT' },
+                  { key: 'UTC', value: 'UTC', text: 'UTC' },
+                  { key: 'IST', value: 'IST', text: 'IST' },
+                  { key: 'CST', value: 'CST', text: 'CST' },
+                ]}
+                disabled={disabled}
+              />
+            </Box>
+          </Box>
         </Box>
       </Box>
     </Box>
   );
 };
-
-export default TechnicalContact;
+export default TransactionLimit;
