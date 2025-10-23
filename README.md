@@ -1,112 +1,57 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { IcustomerProps } from '../../customer-profile';
-import { Box, Input, Select, Typography } from '@ucl/ui-components';
+import {
+  Box,
+  Input,
+  Typography,
+} from '@ucl/ui-components';
 import RadioGroup from '../../../../components/radio-group/radio-group';
 import '../../customer-profile.css';
-
-const CustomerInfo = ({
-  customer,
-  setCustomer,
-  disabled,
-  gatewayCustomerId,
-  mode
-}: IcustomerProps) => {
-
-  // Handle field updates immutably
-  const handleChange = (field: string, value: any) => {
-    setCustomer((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
-  };
-
-  const handleCisNumberChange = (value: string) => {
-    setCustomer((prev) => ({
-      ...prev,
-      cisNumbers: [value],
-    }));
-  };
-
-  const handleDemoChange = (value: boolean) => {
-    setCustomer((prev) => ({
-      ...prev,
-      demoCustomer: value,
-    }));
-  };
-
+const BusinessContact = ({ customer, setCustomer,disabled }: IcustomerProps) => {
+  const [selectMethod,setSelectedMethod]=useState<string>("Email")
   return (
     <Box className="section">
       <Typography variant="h3" className="main-header" fontStyle="italic">
-        Customer Info
+        Business Contact
       </Typography>
-
       <Box className="sub-section">
-        <Typography variant="subtitle1" fontStyle="italic" className="sub-head">
-          {`Gateway Customer Id : ${gatewayCustomerId || 'N/A'}`}
-        </Typography>
-
-        {/* --- Customer Name and CIS --- */}
+        <Box className="main-container">
+          <Input className="main-input" titleLabel="Name" placeholder="Name"  value={customer?.customerContacts[0]?.contactName} disabled={disabled}/>
+          <Input
+            className="main-input"
+            titleLabel="Phone"
+            placeholder="Phone Number"
+            value={customer?.customerContacts[0]?.contactPhone}
+            disabled={disabled}
+          />
+        </Box>
         <Box className="main-container">
           <Input
             className="main-input"
-            titleLabel="Customer Name"
-            value={customer?.name || ''}
-            placeholder="Customer Name"
-            disabled={mode === 'view' || mode === 'edit'}
-            onChange={(e: any) => handleChange('name', e.target.value)}
-          />
-
-          <Input
-            className="main-input"
-            titleLabel="CIS Number"
-            placeholder="CIS Number"
-            value={customer?.cisNumbers?.[0] || ''}
-            disabled={mode === 'view' || mode === 'edit'}
-            onChange={(e: any) => handleCisNumberChange(e.target.value)}
+            titleLabel="Email"
+            placeholder="Email"
+            value={customer?.customerContacts[0]?.contactEmail}
+            disabled={disabled}
           />
         </Box>
-
-        {/* --- Customer Type and Billing Profile --- */}
-        <Box className="main-container">
-          <Select
-            className="main-input"
-            value={customer?.customerType || ''}
-            options={[
-              { key: 'COMMERCIAL', value: 'COMMERCIAL', text: 'COMMERCIAL' },
-              { key: 'INTERNAL', value: 'INTERNAL', text: 'INTERNAL' },
-            ]}
-            title="Customer Type"
-            disabled={disabled}
-            onChange={(val: any) => handleChange('customerType', val)}
-          />
-
-          <Input
-            className="main-input"
-            titleLabel="Billing Profile Id"
-            placeholder="Billing profile Id"
-            value={customer?.billingCustomerId || ''}
-            disabled={disabled}
-            onChange={(e: any) => handleChange('billingCustomerId', e.target.value)}
-          />
-        </Box>
-
-        {/* --- Demo Customer --- */}
         <Box className="main-checkgroup">
-          <Typography variant="body1">Demo Customer :</Typography>
-          <RadioGroup
-            name="DemoCustomer"
-            selectedValue={customer?.demoCustomer}
-            options={[
-              { label: 'Yes', value: true },
-              { label: 'No', value: false },
-            ]}
+          <Typography variant="body1">Preferred Method :</Typography>
+           <RadioGroup
+            name="contactMethodBusiness"
+            selectedValue={customer?.customerContacts[0]?.contactPreferredType}
             disabled={disabled}
-            onChange={handleDemoChange}
+            options={[
+              {
+                label: 'Email',
+                value: 'Email',
+              },
+              { label: 'Phone', value: 'Phone' },
+            ]}
+            onChange={setSelectedMethod}
           />
         </Box>
       </Box>
     </Box>
   );
 };
-
-export default CustomerInfo;
+export default BusinessContact;
