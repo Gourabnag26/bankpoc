@@ -1,200 +1,168 @@
-import React, { useEffect, useState } from 'react';
+import React, { useMemo, useState } from 'react';
+import '../../pages/customer-profile/customer-profile.css';
 import {
   Box,
   Button,
-  Checkbox,
+  DeleteIcon,
+  Dialog,
+  EditIcon,
   Input,
-  Select,
-  Typography,
+  ShowIcon,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Tooltip,
 } from '@ucl/ui-components';
-import CardCheckbox from '../checkbox-menu/checkbox-menu';
-import { ICustomerData } from 'src/pages/customer-profile/customer-profile';
-
-type AccountPopupProps = {
-  account?: any;
-  disabled?: boolean;
-  customer?: ICustomerData;
-  onSave?: (updatedAccount: any) => void;
-  onCancel?: () => void;
-};
-
-type ApiSelectionStateItem = {
-  selectedValue: string[];
-  disabled: boolean;
-  title: string;
-  options: any[];
-};
-
-type ApiSelectionState = {
-  general: ApiSelectionStateItem;
-  rtp: ApiSelectionStateItem;
-  fednow: ApiSelectionStateItem;
-  wires: ApiSelectionStateItem;
-};
-
-const AccountPopup = ({ account, disabled, customer, onSave, onCancel }: AccountPopupProps) => {
-  const [accountState, setAccountState] = useState(account || {});
-
-  const api_general_options = [
-    { id: 'acc_balance', label: 'Account Balance', value: 'Account Balance' },
-  ];
-  const api_rtp_options = [
-    { id: 'ipa_create_credit', label: 'Create Credit & Retrieve Status', value: 'Instant Payments - Create Credit' },
-  ];
-  const api_fednow_options = [
-    { id: 'fednow_createcredit', label: 'Create Credit & Retrieve Status', value: 'FedNow - Create Credit' },
-  ];
-  const api_wire_options = [
-    { id: 'wire_create_credit', label: 'Create Credit & Retrieve Status', value: 'Wire - Create Credit' },
-  ];
-
-  const [apiSelection, setApiSelection] = useState<ApiSelectionState>({
-    general: { selectedValue: [], disabled: true, title: "General", options: api_general_options },
-    rtp: { selectedValue: [], disabled: true, title: "US RTP", options: api_rtp_options },
-    fednow: { selectedValue: [], disabled: true, title: "FedNow", options: api_fednow_options },
-    wires: { selectedValue: [], disabled: true, title: "Wire", options: api_wire_options },
+import { IcustomerProps } from '../../pages/customer-profile/customer-profile';
+import AccountPopup from '../account-popup/account-popup';
+const AccountSearchTable = ({
+  customer,
+  setCustomer,
+  disabled,
+}: IcustomerProps) => {
+  const [accountName, setAccountName] = useState('');
+  const [accountNumber, setAccountNumber] = useState('');
+  const [accountPopup, setAccountPopup] = useState(false);
+  const [isView, setIsView] = useState(false);
+  const [account, setAccount] = useState({});
+  const [filters, setFilters] = useState({
+    accountName: '',
+    accountNumber: '',
   });
-
-  const [isAllSelected, setIsAllSelected] = useState(false);
-
-  // Initialize API selections based on account & customer
-  useEffect(() => {
-    if (!accountState?.products) return;
-
-    let general = true, rtp = true, fednow = true, wires = true;
-    let disableGeneral = true, disableRtp = true, disableFedNow = true, disableWires = true;
-
-    customer?.customerProducts.forEach((product: any) => {
-      if (product.name === 'ACCOUNT_BALANCE_API') {
-        const retrieve = product.resources?.some((r: any) => r.name === 'RETRIEVE_ACCOUNT_BALANCE' && r.enabled);
-        if (retrieve) disableGeneral = false;
-      }
-      if (product.name === 'INSTANT_PAYMENTS_API') {
-        const createTransfer = product.resources?.some((r: any) => r.name === 'CREATE_CREDIT_TRANSFER' && r.enabled);
-        if (createTransfer && product.paymentRails?.length) {
-          product.paymentRails.forEach((rail: any) => {
-            if (rail.enabled) {
-              if (rail.name === 'RTP') disableRtp = false;
-              if (rail.name === 'FEDNOW') disableFedNow = false;
-              if (rail.name === 'WIRES') disableWires = false;
-            }
-          });
-        }
-      }
+  const setAppliedFilter = (obj: any) => {
+    setFilters(obj);
+  };
+  const tableHeaders: any = [
+    'Account Name ',
+    'Account  Number',
+    'Routing Number',
+    'Action',
+  ];
+  const FilteredData = useMemo(() => {
+    const data: any = customer.customerAccounts;
+    return data.filter((row: any) => {
+      return (
+        (!filters.accountName ||
+          row.name.toLowerCase().includes(filters.accountName.toLowerCase())) &&
+        (!filters.accountNumber ||
+          row.number
+            .toLowerCase()
+            .includes(filters.accountNumber.toLowerCase()))
+      );
     });
-
-    accountState?.products?.forEach((product: any) => {
-      if (product.name === 'ACCOUNT_BALANCE_API') {
-        const retrieve = product.resources?.some((r: any) => r.name === 'RETRIEVE_ACCOUNT_BALANCE' && r.enabled);
-        if (retrieve) general = false;
-      }
-      if (product.name === 'INSTANT_PAYMENTS_API') {
-        const createTransfer = product.resources?.some((r: any) => r.name === 'CREATE_CREDIT_TRANSFER' && r.enabled);
-        if (createTransfer && product.paymentRails?.length) {
-          product.paymentRails.forEach((rail: any) => {
-            if (rail.enabled) {
-              if (rail.name === 'RTP') rtp = false;
-              if (rail.name === 'FEDNOW') fednow = false;
-              if (rail.name === 'WIRES') wires = false;
-            }
-          });
-        }
-      }
-    });
-
-    setApiSelection(prev => ({
-      general: { ...prev.general, selectedValue: general ? [] : api_general_options.map(o => o.id), disabled: disableGeneral },
-      rtp: { ...prev.rtp, selectedValue: rtp ? [] : api_rtp_options.map(o => o.id), disabled: disableRtp },
-      fednow: { ...prev.fednow, selectedValue: fednow ? [] : api_fednow_options.map(o => o.id), disabled: disableFedNow },
-      wires: { ...prev.wires, selectedValue: wires ? [] : api_wire_options.map(o => o.id), disabled: disableWires },
-    }));
-  }, [accountState, customer]);
-
-  useEffect(() => {
-    const filteredData = Object.values(apiSelection).filter(api => !api.disabled);
-    setIsAllSelected(filteredData.length > 0 ? filteredData.every(api => api.selectedValue.length > 0) : false);
-  }, [apiSelection]);
-
-  const handleSelectAllChange = (checked: boolean) => {
-    setApiSelection(prev => {
-      const newSelection = { ...prev };
-      Object.keys(newSelection).forEach(key => {
-        const api = newSelection[key as keyof ApiSelectionState];
-        if (!api.disabled) api.selectedValue = checked ? api.options.map(o => o.id) : [];
-      });
-      return newSelection;
-    });
-    setIsAllSelected(checked);
-  };
-
-  const handleChange = (target: keyof ApiSelectionState) => (value: string[]) => {
-    setApiSelection(prev => ({
-      ...prev,
-      [target]: { ...prev[target], selectedValue: value }
-    }));
-  };
-
-  const handleSave = () => {
-    if (onSave) onSave(accountState);
-    if (onCancel) onCancel();
-  };
-
-  const handleCancel = () => {
-    if (onCancel) onCancel();
-  };
-
-  const sx = { width: '250px', height: '40px', margin: '10px' };
+  }, [filters]);
 
   return (
-    <>
-      <Box className="section">
-        <Typography variant="body1" className="main-header" fontStyle="italic" sx={{ fontSize: '21px' }}>
-          Account Info
-        </Typography>
-        <Box sx={{ padding: '10px', display: 'flex' }}>
-          <Input className="main-input" titleLabel="Account Name" placeholder="Account Name" value={accountState?.name} disabled={disabled} sx={sx} onChange={(e) => setAccountState({ ...accountState, name: e.target.value })}/>
-          <Input className="main-input" titleLabel="Account Number" placeholder="Account Number" value={accountState?.number} disabled={disabled} sx={sx} onChange={(e) => setAccountState({ ...accountState, number: e.target.value })}/>
-          <Select className="main-input" title="Bank Code" value={accountState?.bankCode} disabled={disabled} sx={sx} options={[{ key: '10002', value: '10002', text: '10002' }]} onChange={(val) => setAccountState({ ...accountState, bankCode: val })}/>
-        </Box>
-        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-          <Input className="main-input" titleLabel="Routing Number" placeholder="Routing Number" value={accountState?.routingNumber} disabled={disabled} sx={sx} onChange={(e) => setAccountState({ ...accountState, routingNumber: e.target.value })}/>
-          <Checkbox disabled={disabled} checked={accountState?.billingAccount} sx={sx} label="Billing Account" onChange={(checked) => setAccountState({ ...accountState, billingAccount: checked })}/>
-        </Box>
+    <Box sx={{ marginTop: '30px' }}>
+      <Box className="main-container">
+        <Input
+          titleLabel="Account Name"
+          value={accountName}
+          className="main-input"
+          onChange={(e) => {
+            setAccountName(e.target.value);
+          }}
+        />
+        <Input
+          titleLabel="Account Number"
+          value={accountNumber}
+          className="main-input"
+          onChange={(e) => {
+            setAccountNumber(e.target.value);
+          }}
+        />
+        <Button
+          variant="primary"
+          className="button"
+          onClick={() => {
+            setAppliedFilter({
+              accountName: accountName,
+              accountNumber: accountNumber,
+            });
+          }}
+          children="Search"
+        />
       </Box>
+      <TableContainer>
+        <Table>
+          <TableHead>
+            <TableRow>
+              {tableHeaders.map((head: any, key: any) => (
+                <TableCell key={key}>{head}</TableCell>
+              ))}
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {FilteredData?.map((data: any) => (
+              <TableRow key={data.account_name}>
+                <TableCell>{data.name}</TableCell>
+                <TableCell>{data.number}</TableCell>
 
-      <Box className="section">
-        <Typography variant="body1" className="main-header" fontStyle="italic" sx={{ fontSize: '21px' }}>
-          Limits
-        </Typography>
-        <Box sx={{ padding: '10px', display: 'flex' }}>
-          <Input className="main-input" titleLabel="Transaction Limit" placeholder="Transaction Limit" value={accountState?.accountSettings?.cumulativeTransactionLimit} disabled={disabled} sx={sx} onChange={(e) => setAccountState({ ...accountState, accountSettings: { ...accountState.accountSettings, cumulativeTransactionLimit: e.target.value }})}/>
-          <Input className="main-input" titleLabel="Daily Limit" placeholder="Daily Limit" value={accountState?.accountSettings?.transactionLimit} disabled={disabled} sx={sx} onChange={(e) => setAccountState({ ...accountState, accountSettings: { ...accountState.accountSettings, transactionLimit: e.target.value }})}/>
-        </Box>
-      </Box>
-
-      <Box className="section">
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: '30px' }}>
-          <Typography variant="body1" className="main-header" fontStyle="italic" sx={{ fontSize: '21px' }}>Api</Typography>
-          <Checkbox label="Select all" checked={isAllSelected} onChange={(e: any) => handleSelectAllChange(e.target.checked)} disabled={disabled}/>
-        </Box>
-        <Box className="checkbox-container sub-section" sx={{ display: 'flex', flexWrap: 'wrap', gap: '10px', padding: '10px' }}>
-          {Object.keys(apiSelection).map(key => {
-            const api = apiSelection[key as keyof ApiSelectionState];
-            return (
-              <CardCheckbox key={key} title={api.title} checkboxes={api.options} selectedValues={api.selectedValue} disabled={api.disabled || disabled} onChange={handleChange(key as keyof ApiSelectionState)}/>
-            )
-          })}
-        </Box>
-      </Box>
-
-      {!disabled && (
-        <Box sx={{ display: 'flex', justifyContent: 'center', gap: '10px', marginTop: '10px' }}>
-          <Button sx={{ width: '150px' }} onClick={handleSave}>Save</Button>
-          <Button sx={{ width: '150px' }} onClick={handleCancel}>Cancel</Button>
-        </Box>
-      )}
-    </>
+                <TableCell>{data.routingNumber}</TableCell>
+                <TableCell style={{ display: 'flex', gap: '5px' }}>
+                  <Tooltip
+                    title="View"
+                    onClick={() => {
+                      setAccountPopup(true);
+                      setAccount(data);
+                      setIsView(true);
+                    }}
+                    children={
+                      <span>
+                        <ShowIcon />
+                      </span>
+                    }
+                  />
+                  {!disabled && (
+                    <>
+                      <Tooltip
+                        title="Edit"
+                        onClick={() => {
+                          setAccountPopup(true);
+                          setAccount(data);
+                          setIsView(false);
+                        }}
+                        children={
+                          <span>
+                            <EditIcon />
+                          </span>
+                        }
+                      />
+                      <Tooltip
+                        title="Delete"
+                        children={
+                          <span>
+                            <DeleteIcon />
+                          </span>
+                        }
+                      />
+                    </>
+                  )}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+      <Dialog
+        dialogContent={
+          <AccountPopup
+            disabled={isView}
+            account={account}
+            customer={customer}
+            setCustomer={setCustomer}
+          />
+        }
+        dialogTitle="Account Access & Preferences"
+        open={accountPopup}
+        onClose={() => setAccountPopup(false)}
+        fullWidth
+        maxWidth="md"
+      />
+    </Box>
   );
 };
-
-export default AccountPopup;
+export default AccountSearchTable;
