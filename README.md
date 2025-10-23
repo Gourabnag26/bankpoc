@@ -5,21 +5,16 @@ import RadioGroup from '../../../../components/radio-group/radio-group';
 import '../../customer-profile.css';
 
 const BusinessContact = ({ customer, setCustomer, disabled }: IcustomerProps) => {
-  const existingContact = customer?.customerContacts?.find(
-    (c) => c.contactType === 'BUSINESS'
-  );
+  const contactIndex = 0; // Business contact = first item in customerContacts
+  const existingContact = customer?.customerContacts?.[contactIndex] || {};
 
-  // Update the contact info immutably
   const handleContactChange = (field: string, value: string) => {
     setCustomer((prev) => {
       const contacts = [...(prev.customerContacts || [])];
-      const index = contacts.findIndex((c) => c.contactType === 'BUSINESS');
 
-      if (index >= 0) {
-        contacts[index] = { ...contacts[index], [field]: value };
-      } else {
-        contacts.push({
-          contactType: 'BUSINESS',
+      // Ensure there's a contact object at this index
+      if (!contacts[contactIndex]) {
+        contacts[contactIndex] = {
           contactName: '',
           contactTitle: '',
           contactPhone: '',
@@ -27,19 +22,19 @@ const BusinessContact = ({ customer, setCustomer, disabled }: IcustomerProps) =>
           contactEmail: '',
           contactPreferredType: '',
           enabled: true,
-          [field]: value,
-        });
+        };
       }
+
+      contacts[contactIndex] = {
+        ...contacts[contactIndex],
+        [field]: value,
+      };
 
       return {
         ...prev,
         customerContacts: contacts,
       };
     });
-  };
-
-  const handlePreferredChange = (value: string) => {
-    handleContactChange('contactPreferredType', value);
   };
 
   return (
@@ -49,7 +44,7 @@ const BusinessContact = ({ customer, setCustomer, disabled }: IcustomerProps) =>
       </Typography>
 
       <Box className="sub-section">
-        {/* Name and Phone */}
+        {/* Name & Phone */}
         <Box className="main-container">
           <Input
             className="main-input"
@@ -82,7 +77,7 @@ const BusinessContact = ({ customer, setCustomer, disabled }: IcustomerProps) =>
           />
         </Box>
 
-        {/* Preferred Contact Method */}
+        {/* Preferred Method */}
         <Box className="main-checkgroup">
           <Typography variant="body1">Preferred Method :</Typography>
           <RadioGroup
@@ -93,7 +88,7 @@ const BusinessContact = ({ customer, setCustomer, disabled }: IcustomerProps) =>
               { label: 'Email', value: 'Email' },
               { label: 'Phone', value: 'Phone' },
             ]}
-            onChange={handlePreferredChange}
+            onChange={(val: string) => handleContactChange('contactPreferredType', val)}
           />
         </Box>
       </Box>
