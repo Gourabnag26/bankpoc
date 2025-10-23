@@ -57,21 +57,20 @@ const AccountPopup = ({ account, disabled, customer, onSave, onCancel }: Account
 
   const [isAllSelected, setIsAllSelected] = useState(false);
 
+  // Update disabled and selected values based on customer and account
   useEffect(() => {
-    if (!accountState?.products) return;
+    if (!customer) return;
 
-    let general = true, rtp = true, fednow = true, wires = true;
+    // Determine availability (disabled) from customer products
     let disableGeneral = true, disableRtp = true, disableFedNow = true, disableWires = true;
 
-    customer?.customerProducts.forEach((product: any) => {
+    customer.customerProducts?.forEach((product: any) => {
       if (product.name === 'ACCOUNT_BALANCE_API') {
-        const retrieve = product.resources?.some((r: any) => r.name === 'RETRIEVE_ACCOUNT_BALANCE' && r.enabled);
-        if (retrieve) disableGeneral = false;
+        if (product.resources?.some(r => r.name === 'RETRIEVE_ACCOUNT_BALANCE' && r.enabled)) disableGeneral = false;
       }
       if (product.name === 'INSTANT_PAYMENTS_API') {
-        const createTransfer = product.resources?.some((r: any) => r.name === 'CREATE_CREDIT_TRANSFER' && r.enabled);
-        if (createTransfer && product.paymentRails?.length) {
-          product.paymentRails.forEach((rail: any) => {
+        if (product.resources?.some(r => r.name === 'CREATE_CREDIT_TRANSFER' && r.enabled)) {
+          product.paymentRails?.forEach((rail: any) => {
             if (rail.enabled) {
               if (rail.name === 'RTP') disableRtp = false;
               if (rail.name === 'FEDNOW') disableFedNow = false;
@@ -82,36 +81,28 @@ const AccountPopup = ({ account, disabled, customer, onSave, onCancel }: Account
       }
     });
 
-    accountState?.products?.forEach((product: any) => {
-      if (product.name === 'ACCOUNT_BALANCE_API') {
-        const retrieve = product.resources?.some((r: any) => r.name === 'RETRIEVE_ACCOUNT_BALANCE' && r.enabled);
-        if (retrieve) general = false;
-      }
-      if (product.name === 'INSTANT_PAYMENTS_API') {
-        const createTransfer = product.resources?.some((r: any) => r.name === 'CREATE_CREDIT_TRANSFER' && r.enabled);
-        if (createTransfer && product.paymentRails?.length) {
-          product.paymentRails.forEach((rail: any) => {
-            if (rail.enabled) {
-              if (rail.name === 'RTP') rtp = false;
-              if (rail.name === 'FEDNOW') fednow = false;
-              if (rail.name === 'WIRES') wires = false;
-            }
-          });
-        }
-      }
+    // Determine selection from account products
+    const getSelectedIds = (apiName: string, options: any[]) => {
+      if (!accountState?.products) return [];
+      const product = accountState.products.find((p: any) => p.name === apiName);
+      if (!product) return [];
+      return options
+        .filter(opt => product.resources?.some((r: any) => r.name.toUpperCase().includes(opt.id.toUpperCase()) && r.enabled))
+        .map(opt => opt.id);
+    };
+
+    setApiSelection({
+      general: { ...apiSelection.general, disabled: disableGeneral, selectedValue: getSelectedIds('ACCOUNT_BALANCE_API', api_general_options) },
+      rtp: { ...apiSelection.rtp, disabled: disableRtp, selectedValue: getSelectedIds('INSTANT_PAYMENTS_API', api_rtp_options) },
+      fednow: { ...apiSelection.fednow, disabled: disableFedNow, selectedValue: getSelectedIds('INSTANT_PAYMENTS_API', api_fednow_options) },
+      wires: { ...apiSelection.wires, disabled: disableWires, selectedValue: getSelectedIds('INSTANT_PAYMENTS_API', api_wire_options) },
     });
+  }, [customer, accountState]);
 
-    setApiSelection(prev => ({
-      general: { ...prev.general, selectedValue: general ? [] : api_general_options.map(o => o.id), disabled: disableGeneral },
-      rtp: { ...prev.rtp, selectedValue: rtp ? [] : api_rtp_options.map(o => o.id), disabled: disableRtp },
-      fednow: { ...prev.fednow, selectedValue: fednow ? [] : api_fednow_options.map(o => o.id), disabled: disableFedNow },
-      wires: { ...prev.wires, selectedValue: wires ? [] : api_wire_options.map(o => o.id), disabled: disableWires },
-    }));
-  }, [accountState, customer]);
-
+  // Update "Select All" checkbox
   useEffect(() => {
-    const filteredData = Object.values(apiSelection).filter(api => !api.disabled);
-    setIsAllSelected(filteredData.length > 0 ? filteredData.every(api => api.selectedValue.length > 0) : false);
+    const availableApis = Object.values(apiSelection).filter(api => !api.disabled);
+    setIsAllSelected(availableApis.length > 0 ? availableApis.every(api => api.selectedValue.length > 0) : false);
   }, [apiSelection]);
 
   const handleSelectAllChange = (checked: boolean) => {
@@ -127,17 +118,13 @@ const AccountPopup = ({ account, disabled, customer, onSave, onCancel }: Account
   };
 
   const handleChange = (target: keyof ApiSelectionState) => (value: string[]) => {
-    setApiSelection(prev => ({
-      ...prev,
-      [target]: { ...prev[target], selectedValue: value }
-    }));
+    setApiSelection(prev => ({ ...prev, [target]: { ...prev[target], selectedValue: value } }));
   };
 
   const handleSave = () => {
     if (onSave) onSave(accountState);
     if (onCancel) onCancel();
   };
-
   const handleCancel = () => {
     if (onCancel) onCancel();
   };
@@ -146,46 +133,50 @@ const AccountPopup = ({ account, disabled, customer, onSave, onCancel }: Account
 
   return (
     <>
+      {/* Account Info */}
       <Box className="section">
         <Typography variant="body1" className="main-header" fontStyle="italic" sx={{ fontSize: '21px' }}>
           Account Info
         </Typography>
         <Box sx={{ padding: '10px', display: 'flex' }}>
-          <Input className="main-input" titleLabel="Account Name" placeholder="Account Name" value={accountState?.name} disabled={disabled} sx={sx} onChange={(e) => setAccountState({ ...accountState, name: e.target.value })}/>
-          <Input className="main-input" titleLabel="Account Number" placeholder="Account Number" value={accountState?.number} disabled={disabled} sx={sx} onChange={(e) => setAccountState({ ...accountState, number: e.target.value })}/>
-          <Select className="main-input" title="Bank Code" value={accountState?.bankCode} disabled={disabled} sx={sx} options={[{ key: '10002', value: '10002', text: '10002' }]} onChange={(val) => setAccountState({ ...accountState, bankCode: val })}/>
+          <Input className="main-input" titleLabel="Account Name" placeholder="Account Name" value={accountState?.name} disabled={disabled} sx={sx} onChange={e => setAccountState({ ...accountState, name: e.target.value })} />
+          <Input className="main-input" titleLabel="Account Number" placeholder="Account Number" value={accountState?.number} disabled={disabled} sx={sx} onChange={e => setAccountState({ ...accountState, number: e.target.value })} />
+          <Select className="main-input" title="Bank Code" value={accountState?.bankCode} disabled={disabled} sx={sx} options={[{ key: '10002', value: '10002', text: '10002' }]} onChange={val => setAccountState({ ...accountState, bankCode: val })} />
         </Box>
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
-          <Input className="main-input" titleLabel="Routing Number" placeholder="Routing Number" value={accountState?.routingNumber} disabled={disabled} sx={sx} onChange={(e) => setAccountState({ ...accountState, routingNumber: e.target.value })}/>
-          <Checkbox disabled={disabled} checked={accountState?.billingAccount} sx={sx} label="Billing Account" onChange={(checked) => setAccountState({ ...accountState, billingAccount: checked })}/>
+          <Input className="main-input" titleLabel="Routing Number" placeholder="Routing Number" value={accountState?.routingNumber} disabled={disabled} sx={sx} onChange={e => setAccountState({ ...accountState, routingNumber: e.target.value })} />
+          <Checkbox disabled={disabled} checked={accountState?.billingAccount} sx={sx} label="Billing Account" onChange={checked => setAccountState({ ...accountState, billingAccount: checked })} />
         </Box>
       </Box>
 
+      {/* Limits */}
       <Box className="section">
         <Typography variant="body1" className="main-header" fontStyle="italic" sx={{ fontSize: '21px' }}>
           Limits
         </Typography>
         <Box sx={{ padding: '10px', display: 'flex' }}>
-          <Input className="main-input" titleLabel="Transaction Limit" placeholder="Transaction Limit" value={accountState?.accountSettings?.cumulativeTransactionLimit} disabled={disabled} sx={sx} onChange={(e) => setAccountState({ ...accountState, accountSettings: { ...accountState.accountSettings, cumulativeTransactionLimit: e.target.value }})}/>
-          <Input className="main-input" titleLabel="Daily Limit" placeholder="Daily Limit" value={accountState?.accountSettings?.transactionLimit} disabled={disabled} sx={sx} onChange={(e) => setAccountState({ ...accountState, accountSettings: { ...accountState.accountSettings, transactionLimit: e.target.value }})}/>
+          <Input className="main-input" titleLabel="Transaction Limit" placeholder="Transaction Limit" value={accountState?.accountSettings?.cumulativeTransactionLimit} disabled={disabled} sx={sx} onChange={e => setAccountState({ ...accountState, accountSettings: { ...accountState.accountSettings, cumulativeTransactionLimit: e.target.value } })} />
+          <Input className="main-input" titleLabel="Daily Limit" placeholder="Daily Limit" value={accountState?.accountSettings?.transactionLimit} disabled={disabled} sx={sx} onChange={e => setAccountState({ ...accountState, accountSettings: { ...accountState.accountSettings, transactionLimit: e.target.value } })} />
         </Box>
       </Box>
 
+      {/* API Selection */}
       <Box className="section">
         <Box sx={{ display: 'flex', alignItems: 'center', gap: '30px' }}>
           <Typography variant="body1" className="main-header" fontStyle="italic" sx={{ fontSize: '21px' }}>Api</Typography>
-          <Checkbox label="Select all" checked={isAllSelected} onChange={(e: any) => handleSelectAllChange(e.target.checked)} disabled={disabled}/>
+          <Checkbox label="Select all" checked={isAllSelected} onChange={e => handleSelectAllChange(e.target.checked)} disabled={disabled} />
         </Box>
         <Box className="checkbox-container sub-section" sx={{ display: 'flex', flexWrap: 'wrap', gap: '10px', padding: '10px' }}>
           {Object.keys(apiSelection).map(key => {
             const api = apiSelection[key as keyof ApiSelectionState];
             return (
-              <CardCheckbox key={key} title={api.title} checkboxes={api.options} selectedValues={api.selectedValue} disabled={api.disabled || disabled} onChange={handleChange(key as keyof ApiSelectionState)}/>
-            )
+              <CardCheckbox key={key} title={api.title} checkboxes={api.options} selectedValues={api.selectedValue} disabled={api.disabled || disabled} onChange={handleChange(key as keyof ApiSelectionState)} />
+            );
           })}
         </Box>
       </Box>
 
+      {/* Buttons */}
       {!disabled && (
         <Box sx={{ display: 'flex', justifyContent: 'center', gap: '10px', marginTop: '10px' }}>
           <Button sx={{ width: '150px' }} onClick={handleSave}>Save</Button>
