@@ -1,92 +1,149 @@
-import * as React from 'react';
-import { Router } from '../shared/components/router/router';
-import { IRouter } from '../shared/model';
-import { IPARoutes } from '../shared/routes';
-import PageLayout from './pages/page-layout';
-import PageNotFound from './pages/page-not-found';
-import CustomerSearch from './pages/customer-search';
-import CustomerProfile from './pages/customer-profile';
-import MyTasks from './pages/my-tasks';
-import { useLocation } from 'react-router-dom';
-import { Security } from '@okta/okta-react';
-import {LoginCallback} from '@okta/okta-react';
-import { useOktaAuthService } from 'shared/hooks/use-okta-authentication';
-import {SecureRoute} from '../shared/components/router/secure-route/secure-route'
+import React, { useState, useEffect } from "react";
+import SprintButtons from "./components/SprintButtons";
+import MembersList from "./components/MembersList";
+import WorkItemsTable from "./components/WorkItemsTable";
+import SummaryCards from "./components/SummaryCards";
+import SprintModal from "./components/SprintModal";
+import MemberModal from "./components/MemberModal";
+import PieChartOverview from "./components/PieChartOverview";
 
-export const scene: IRouter[] = [
-  {
-    element: <SecureRoute /> ,
-    path: IPARoutes.myTasks,
-    title: 'layout',
-    childRoutes: [
-      {
-        element: <MyTasks />,
-        path: IPARoutes.myTasks,
-        title: 'mytask',
-      },
-      {
-        element: <CustomerSearch/>,
-        path: IPARoutes.customerSearch,
-        title: 'customersearch',
-      },
-      {
-        element: <CustomerProfile />,
-        path:  IPARoutes.customerProfile,
-        title: 'Customer-profile',
-      },
-    ],
-  },
-  
-  {
-    element: <PageNotFound />,
-    path: '*',
-    title: '404page',
-  },
-  {
-    element: <LoginCallback/>,
-    path: '/login/callback',
-    title: '404page',
-  },
-];
+import {
+  fetchSprints,
+  createSprint,
+  fetchMembers,
+  addMember,
+  fetchWorkItems,
+} from "../api";
 
-export function AppBanner() {
-  const location = useLocation();
-  const searchParams = new URLSearchParams(location.search);
-  const role= searchParams.get("role");
-  const mode= searchParams.get("mode");
+export default function Dashboard() {
+  const [sprints, setSprints] = useState([]);
+  const [activeSprintId, setActiveSprintId] = useState(null);
+  const [members, setMembers] = useState([]);
+  const [workItems, setWorkItems] = useState([]);
 
-  const titleMap: Record <string, string> = {
-    [IPARoutes.error]: "Error",
-    [IPARoutes.myTasks]: 'My Tasks' ,
-    [IPARoutes.customerSearch]: "Customer Search",
-    [IPARoutes.customerProfile]: (IPARoutes.customerProfile === "/customer-profile" && role ==="approver" && mode === "edit") ? `Customer Profile - Approval View` : IPARoutes.customerProfile === "/customer-profile" ? `Customer Profile - ${mode?.toUpperCase() || 'VIEW'}` : '',
-    //Add path after creation of new page to update banner
+  // Modal state
+  const [showSprintModal, setShowSprintModal] = useState(false);
+  const [showMemberModal, setShowMemberModal] = useState(false);
+
+  // Form state
+  const [newSprintName, setNewSprintName] = useState("");
+  const [memberName, setMemberName] = useState("");
+  const [role, setRole] = useState("Lead");
+  const [team, setTeam] = useState("Dev");
+
+  // Load sprints on mount
+  useEffect(() => {
+    loadSprints();
+  }, []);
+
+  // Load members and work items when active sprint changes
+  useEffect(() => {
+    if (!activeSprintId) return;
+    loadMembers(activeSprintId);
+    loadWorkItems(activeSprintId);
+  }, [activeSprintId]);
+
+  async function loadSprints() {
+    const data = await fetchSprints();
+    setSprints(data);
+    if (data.length) setActiveSprintId(data[0].id);
   }
-  return titleMap;
-}
 
-const IPAPages: React.FC = () => {
-  const { getOktaConfig, restoreOktaOriginalUri } = useOktaAuthService();
+  async function loadMembers(sprintId) {
+    const data = await fetchMembers(sprintId);
+    setMembers(data);
+  }
+
+  async function loadWorkItems(sprintId) {
+    const data = await fetchWorkItems(sprintId);
+    setWorkItems(data);
+  }
+
+  async function handleCreateSprint() {
+    if (!newSprintName) return;
+    const sprint = await createSprint({ name: newSprintName });
+    setSprints([sprint, ...sprints]);
+    setNewSprintName("");
+    setActiveSprintId(sprint.id);
+    setShowSprintModal(false);
+  }
+
+  async function handleAddMember(e) {
+    e.preventDefault();
+    if (!memberName) return;
+    await addMember(activeSprintId, { memberName, role, team });
+    setMemberName("");
+    setRole("Lead");
+    setTeam("Dev");
+    setShowMemberModal(false);
+    loadMembers(activeSprintId);
+  }
 
   return (
-    <Security
-      oktaAuth={getOktaConfig()}
-      restoreOriginalUri={restoreOktaOriginalUri}
-    >
-      <PageLayout>
-        <Router pages={scene} />
-      </PageLayout>
-      
-    </Security>
+    <div className="min-h-screen p-6 bg-gray-900 text-white">
+      <header className="flex justify-between mb-6">
+        <h1 className="text-3xl font-bold">Sprint Dashboard</h1>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setShowSprintModal(true)}
+            className="px-4 py-2 bg-indigo-600 rounded"
+          >
+            + Add Sprint
+          </button>
+          {activeSprintId && (
+            <button
+              onClick={() => setShowMemberModal(true)}
+              className="px-4 py-2 bg-green-600 rounded"
+            >
+              + Add Member
+            </button>
+          )}
+        </div>
+      </header>
+
+      {/* Sprint Buttons */}
+      <SprintButtons
+        sprints={sprints}
+        activeSprintId={activeSprintId}
+        onSelectSprint={setActiveSprintId}
+      />
+
+      {/* Summary Cards */}
+      <SummaryCards
+        sprintsCount={sprints.length}
+        totalTasks={workItems.length}
+        completedTasks={workItems.filter((i) => i.status === "Done").length}
+        pendingTasks={workItems.filter((i) => i.status !== "Done").length}
+      />
+
+      {/* Pie Chart */}
+      <PieChartOverview workItems={workItems} />
+
+      {/* Members List */}
+      <MembersList members={members} />
+
+      {/* Work Items Table */}
+      <WorkItemsTable workItems={workItems} />
+
+      {/* Modals */}
+      <SprintModal
+        show={showSprintModal}
+        onClose={() => setShowSprintModal(false)}
+        sprintName={newSprintName}
+        setSprintName={setNewSprintName}
+        onCreate={handleCreateSprint}
+      />
+      <MemberModal
+        show={showMemberModal}
+        onClose={() => setShowMemberModal(false)}
+        memberName={memberName}
+        setMemberName={setMemberName}
+        role={role}
+        setRole={setRole}
+        team={team}
+        setTeam={setTeam}
+        onAdd={handleAddMember}
+      />
+    </div>
   );
-};
-
-export default IPAPages;
-
-
-
-
-Okwidp-dev
-400
-Bad Request
-Your request resulted in an error. The 'redirect_uri' parameter must be a Login redirect URI in the client app settings: https://okwidp-dev-admin.oktapreview.com/admin/app/oidc_client/instance/0oaqsv5cn7lUDGuDO1d7#tab-general
+}
